@@ -7,8 +7,7 @@ import { Project, Video } from '../models/models';
   providedIn: 'root'
 })
 export class Api {
-  private baseUrl = 'http://localhost:8000'; // Your backend API URL
-
+  private baseUrl = 'http://localhost:8000';
   constructor(private http: HttpClient) { }
 
   private handleError(error: HttpErrorResponse) {

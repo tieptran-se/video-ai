@@ -1,5 +1,5 @@
-from pydantic import BaseModel, ConfigDict # Import ConfigDict for Pydantic V2+
-from typing import List, Optional, Any
+from pydantic import BaseModel, ConfigDict 
+from typing import List, Optional, Any 
 from datetime import datetime
 
 class VideoBase(BaseModel):
@@ -13,11 +13,11 @@ class VideoSchema(VideoBase):
     project_id: int
     filepath: str
     status: str
-    transcript: Optional[Any] # Can be a JSON string or parsed object
+    # Transcript will be parsed by the frontend from the JSON string
+    transcript: Optional[Any] 
     summary: Optional[str]
     uploaded_at: datetime
 
-    # Updated for Pydantic V2+
     model_config = ConfigDict(from_attributes=True)
 
 class ProjectBase(BaseModel):
@@ -31,5 +31,4 @@ class ProjectSchema(ProjectBase):
     created_at: datetime
     videos: List[VideoSchema] = []
 
-    # Updated for Pydantic V2+
     model_config = ConfigDict(from_attributes=True)

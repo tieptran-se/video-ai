@@ -22,7 +22,8 @@ class Video(Base):
     filename = Column(String)
     filepath = Column(String) # Path where the video is stored
     status = Column(String, default="uploaded") # e.g., uploaded, processing, completed, failed
-    transcript = Column(Text, nullable=True) # Store JSON transcript with timestamps
+    # Transcript will now store a JSON object: {"key_topics": [...], "segments": [...]}
+    transcript = Column(Text, nullable=True) 
     summary = Column(Text, nullable=True) # Optional: if you generate a summary
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
 

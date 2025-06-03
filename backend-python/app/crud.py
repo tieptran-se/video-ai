@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from typing import Optional # Import Optional here
-from . import models, schemas # Relative imports within the same package
+from typing import Optional 
+from . import models, schemas 
 import json
 
 def get_project_by_name(db: Session, name: str):
@@ -20,8 +20,6 @@ def get_projects(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Project).offset(skip).limit(limit).all()
 
 def create_video_for_project(db: Session, video: schemas.VideoCreate, project_id: int, filepath: str):
-    # Use .model_dump() for Pydantic V2+ instead of .dict() if video is a Pydantic model instance
-    # However, here 'video' is of type schemas.VideoCreate, so its attributes are accessed directly
     db_video = models.Video(filename=video.filename, project_id=project_id, filepath=filepath, status="uploaded")
     db.add(db_video)
     db.commit()
@@ -32,7 +30,7 @@ def update_video_status(db: Session, video_id: int, status: str, transcript: Opt
     db_video = db.query(models.Video).filter(models.Video.id == video_id).first()
     if db_video:
         db_video.status = status
-        if transcript:
+        if transcript: 
             db_video.transcript = transcript
         if summary:
             db_video.summary = summary

@@ -19,14 +19,14 @@
 } @else if (project) {
   <div class="space-y-8">
     <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-300">
-      <button mat-icon-button (click)="goBackToProjects()" aria-label="Back to projects list" class="text-gray-600 hover:text-brand-blue cursor-pointer">
+      <button mat-icon-button (click)="goBackToProjects()" aria-label="Back to projects list" class="text-gray-600 hover:text-brand-blue">
         <mat-icon>arrow_back_ios</mat-icon>
       </button>
-      <h2 class="text-3xl font-semibold text-gray-800 flex items-center !m-0">
+      <h2 class="text-3xl font-semibold text-gray-800 flex items-center">
         <mat-icon class="mr-3 text-3xl text-brand-blue">folder_special</mat-icon>
         {{ project.name }}
       </h2>
-      <span class="text-sm text-gray-500">Project ID: {{ project.id }}</span>
+      <span class="text-sm text-gray-500">ID: {{ project.id }}</span>
     </div>
 
     <mat-card class="p-2 sm:p-0">
@@ -35,7 +35,7 @@
       </mat-card-header>
       <mat-card-content class="p-4 space-y-2 text-gray-600">
         <p><strong>Created:</strong> {{ project.created_at | date:'fullDate' }} at {{ project.created_at | date:'shortTime' }}</p>
-        <p><strong>Total Videos: </strong> <span class="font-semibold text-brand-blue">{{ project.videos?.length || 0 }}</span></p>
+        <p><strong>Total Videos:</strong> <span class="font-semibold text-brand-blue">{{ project.videos?.length || 0 }}</span></p>
       </mat-card-content>
     </mat-card>
 
@@ -52,11 +52,10 @@
       <mat-card class="p-2 sm:p-0">
          <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
             <mat-card-title class="text-xl font-medium text-slate-700">
-                Preview video with transcript
+                Video Details & Transcript: <span class="font-semibold text-brand-blue">{{ currentVideoForTranscript.filename }}</span>
             </mat-card-title>
          </mat-card-header>
         <mat-card-content class="p-4">
-          <h3 class="font-semibold text-brand-blue">File name: {{ currentVideoForTranscript.filename }}</h3>
           @if (currentVideoForTranscript.status === 'processing' || (currentVideoForTranscript.status === 'uploaded' && isPollingVideo)) {
             <div class="flex flex-col items-center justify-center p-6 my-4 border border-blue-200 bg-blue-50 rounded-lg text-blue-700">
               <mat-spinner [diameter]="50" color="accent" class="mb-3"></mat-spinner>
@@ -64,7 +63,7 @@
               <p class="text-sm">This may take a few moments. We'll update the status automatically.</p>
             </div>
           }
-          <app-transcript-display [video]="currentVideoForTranscript"></app-transcript-display>
+          <app-transcript-display [video]="currentVideoForTranscript" [parsedTranscriptData]="parsedTranscript"></app-transcript-display>
         </mat-card-content>
       </mat-card>
     } @else if (project.videos?.length === 0) {
@@ -80,47 +79,49 @@
         <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
             <mat-card-title class="text-xl font-medium text-slate-700">Project Video Library</mat-card-title>
         </mat-card-header>
-        <mat-card-content class="p-4"> <!-- Added padding to card content -->
+        <mat-card-content class="p-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               @for (vid of project.videos; track vid.id) {
                 <div matRipple
                      (click)="selectVideoForTranscript(vid)"
-                     class="video-item-card bg-white rounded-lg border border-gray-200 p-4 cursor-pointer transition-all duration-200 ease-in-out hover:shadow-xl hover:border-brand-blue-500/50 group"
+                     class="video-item-card bg-white rounded-lg border border-gray-200 p-4 cursor-pointer transition-all duration-200 ease-in-out hover:shadow-xl hover:border-brand-blue-500/50 group flex flex-col justify-between"
                      [class.ring-2]="currentVideoForTranscript?.id === vid.id"
                      [class.ring-brand-blue]="currentVideoForTranscript?.id === vid.id"
                      [class.shadow-lg]="currentVideoForTranscript?.id === vid.id">
                   
-                  <div class="flex items-center mb-3">
-                    <mat-icon class="mr-3 text-2xl !overflow-visible" [ngClass]="{
-                      'text-green-500': vid.status === 'completed',
-                      'text-red-500': vid.status === 'failed',
-                      'text-yellow-500 animate-pulse': isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded'),
-                      'text-gray-400': !isPollingVideo || currentVideoForTranscript?.id !== vid.id
-                    }">
-                      {{ vid.status === 'completed' ? 'check_circle_outline'
-                      : (vid.status === 'failed' ? 'error_outline'
-                      : (isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded') ? 'sync' : 'hourglass_outline')) }}
-                    </mat-icon>
-                    <h3 class="text-md font-semibold text-gray-800 truncate group-hover:text-brand-blue !m-0" [title]="vid.filename">
-                      {{ vid.filename }}
-                    </h3>
-                  </div>
+                  <div>
+                    <div class="flex items-start mb-3">
+                      <mat-icon class="mr-3 text-2xl mt-0.5 !overflow-visible" [ngClass]="{
+                        'text-green-500': vid.status === 'completed',
+                        'text-red-500': vid.status === 'failed',
+                        'text-yellow-500 animate-pulse': isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded'),
+                        'text-gray-400': !isPollingVideo || currentVideoForTranscript?.id !== vid.id
+                      }">
+                        {{ vid.status === 'completed' ? 'check_circle_outline'
+                        : (vid.status === 'failed' ? 'error_outline'
+                        : (isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded') ? 'sync' : 'hourglass_outline')) }}
+                      </mat-icon>
+                      <h3 class="text-md font-semibold text-gray-800 group-hover:text-brand-blue leading-tight !m-0" [title]="vid.filename">
+                        {{ vid.filename }}
+                      </h3>
+                    </div>
 
-                  <div class="text-xs text-gray-500 mb-2 space-y-0.5">
-                    <p>Status: 
-                      <span class="font-medium capitalize" [ngClass]="{
-                        'text-green-600': vid.status === 'completed',
-                        'text-red-600': vid.status === 'failed',
-                        'text-yellow-600': vid.status === 'processing' || vid.status === 'uploaded'
-                      }">{{ vid.status }}</span>
-                    </p>
-                    <p>Uploaded: {{ vid.uploaded_at | date:'shortDate' }} at {{ vid.uploaded_at | date:'shortTime' }}</p>
+                    <div class="text-xs text-gray-500 mb-2 space-y-0.5">
+                      <p>Status: 
+                        <span class="font-medium capitalize" [ngClass]="{
+                          'text-green-600': vid.status === 'completed',
+                          'text-red-600': vid.status === 'failed',
+                          'text-yellow-600': vid.status === 'processing' || vid.status === 'uploaded'
+                        }">{{ vid.status }}</span>
+                      </p>
+                      <p>Uploaded: {{ vid.uploaded_at | date:'shortDate' }} {{ vid.uploaded_at | date:'shortTime' }}</p>
+                    </div>
                   </div>
                   
-                  <div class="mt-auto pt-2 text-right"> <!-- Pushes button to bottom if content above varies -->
+                  <div class="mt-auto pt-3 text-right border-t border-gray-100 -mx-4 px-4 -mb-4 pb-3 group-hover:bg-slate-50 rounded-b-lg transition-colors">
                      <button mat-stroked-button (click)="selectVideoForTranscript(vid); $event.stopPropagation()" 
                              color="primary"
-                             class="text-xs !min-w-0 !px-3 !py-1 rounded-full">
+                             class="text-xs !min-w-0 !px-3 !py-1 !leading-none rounded-full group-hover:bg-brand-blue group-hover:text-white group-hover:border-brand-blue">
                       </button>
                   </div>
                 </div>

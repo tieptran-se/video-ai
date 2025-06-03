@@ -7,7 +7,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Subscription, Subject, timer, switchMap, takeWhile, finalize } from 'rxjs';
-import { Project, Video } from '../../models/models';
+import { Project, Video, VideoTranscript } from '../../models/models';
 import { Api } from '../../services/api';
 import { TranscriptDisplay } from '../transcript-display/transcript-display';
 import { VideoUpload } from '../video-upload/video-upload';
@@ -37,11 +37,12 @@ import { MatRippleModule } from '@angular/material/core';
   styleUrl: './project-view.scss'
 })
 export class ProjectView implements OnInit, OnDestroy {
-@Input() id?: string;
+  @Input() id?: string;
   project: Project | null = null;
   isLoadingProject: boolean = true;
   errorMessage: string | null = null;
   currentVideoForTranscript: Video | null = null;
+  parsedTranscript: VideoTranscript | null = null;
   isPollingVideo: boolean = false;
   private pollingSub?: Subscription;
   private ngUnsubscribe = new Subject<void>();
@@ -50,7 +51,7 @@ export class ProjectView implements OnInit, OnDestroy {
     private router: Router,
     private apiService: Api,
     private snackBar: MatSnackBar
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     if (this.id && !isNaN(+this.id)) {
@@ -66,57 +67,83 @@ export class ProjectView implements OnInit, OnDestroy {
     this.isLoadingProject = true;
     this.errorMessage = null;
     this.apiService.getProject(projectId).subscribe({
-        next: (data) => {
-            if (data) {
-                this.project = data;
-                this.determineInitialVideoForTranscript();
-            } else {
-                this.errorMessage = "Project not found.";
-                this.snackBar.open(this.errorMessage, 'Close');
-            }
-            this.isLoadingProject = false;
-        },
-        error: (err) => {
-            this.errorMessage = err.message;
-            this.snackBar.open(`Error loading project: ${this.errorMessage}`, 'Close', { panelClass: 'snackbar-error' });
-            this.isLoadingProject = false;
-            console.error(err);
+      next: (data) => {
+        if (data) {
+          this.project = data;
+          this.determineInitialVideoForTranscript();
+        } else {
+          this.errorMessage = "Project not found.";
+          this.snackBar.open(this.errorMessage, 'Close');
         }
+        this.isLoadingProject = false;
+      },
+      error: (err) => {
+        this.errorMessage = err.message;
+        this.snackBar.open(`Error loading project: ${this.errorMessage}`, 'Close', { panelClass: 'snackbar-error' });
+        this.isLoadingProject = false;
+        console.error(err);
+      }
     });
+  }
+
+  private parseVideoTranscript(video: Video | null): void {
+    if (video && video.transcript && typeof video.transcript === 'string') {
+      try {
+        const parsedData = JSON.parse(video.transcript);
+        if (parsedData && Array.isArray(parsedData.segments) && Array.isArray(parsedData.key_moments)) {
+          this.parsedTranscript = parsedData as VideoTranscript;
+        } else {
+          console.error("Parsed transcript does not match VideoTranscript structure:", parsedData);
+          this.parsedTranscript = { segments: [], key_moments: [] };
+        }
+      } catch (e) {
+        console.error("Error parsing video transcript JSON:", e);
+        this.parsedTranscript = { segments: [], key_moments: [] };
+      }
+    } else if (video && typeof video.transcript === 'object' && video.transcript !== null) {
+      const transcriptObj = video.transcript as VideoTranscript;
+      if (transcriptObj && Array.isArray(transcriptObj.segments) && Array.isArray(transcriptObj.key_moments)) {
+        this.parsedTranscript = transcriptObj;
+      } else {
+        console.error("Transcript object does not match VideoTranscript structure:", transcriptObj);
+        this.parsedTranscript = { segments: [], key_moments: [] };
+      }
+    } else {
+      this.parsedTranscript = null;
+    }
   }
 
   private determineInitialVideoForTranscript(): void {
     if (this.project && this.project.videos && this.project.videos.length > 0) {
       const processingVideo = this.project.videos.find(v => v.status === 'processing' || v.status === 'uploaded');
       if (processingVideo && processingVideo.id) {
-        this.currentVideoForTranscript = processingVideo;
-        this.pollVideoStatus(processingVideo.id);
+        this.selectVideoForTranscript(processingVideo);
       } else {
         const completedVideos = this.project.videos.filter(v => v.status === 'completed');
         if (completedVideos.length > 0) {
-            completedVideos.sort((a, b) => (new Date(b.uploaded_at || 0).getTime() - new Date(a.uploaded_at || 0).getTime()));
-            this.currentVideoForTranscript = completedVideos[0];
+          completedVideos.sort((a, b) => (new Date(b.uploaded_at || 0).getTime() - new Date(a.uploaded_at || 0).getTime()));
+          this.selectVideoForTranscript(completedVideos[0]);
         } else if (this.project.videos.length > 0) {
-            this.currentVideoForTranscript = this.project.videos[this.project.videos.length - 1];
+          this.selectVideoForTranscript(this.project.videos[this.project.videos.length - 1]);
         }
       }
     } else {
-        this.currentVideoForTranscript = null;
+      this.currentVideoForTranscript = null;
+      this.parsedTranscript = null;
     }
   }
 
   onVideoUploadStarted(video: Video): void {
     if (this.project && video.id) {
-        if (!this.project.videos) this.project.videos = [];
-        const existingVideoIndex = this.project.videos.findIndex(v => v.id === video.id);
-        if (existingVideoIndex > -1) {
-            this.project.videos[existingVideoIndex] = video;
-        } else {
-            this.project.videos.push(video);
-        }
-        this.currentVideoForTranscript = video;
-        this.pollVideoStatus(video.id);
-        this.snackBar.open(`Video "${video.filename}" upload started and is now processing.`, 'Close');
+      if (!this.project.videos) this.project.videos = [];
+      const existingVideoIndex = this.project.videos.findIndex(v => v.id === video.id);
+      if (existingVideoIndex > -1) {
+        this.project.videos[existingVideoIndex] = video;
+      } else {
+        this.project.videos.push(video);
+      }
+      this.selectVideoForTranscript(video);
+      this.snackBar.open(`Video "${video.filename}" upload started and is now processing.`, 'Close');
     }
   }
 
@@ -137,10 +164,11 @@ export class ProjectView implements OnInit, OnDestroy {
           if (this.project && this.project.videos) {
             const index = this.project.videos.findIndex(v => v.id === video.id);
             if (index !== -1) {
-              this.project.videos[index] = {...this.project.videos[index], ...video};
+              this.project.videos[index] = { ...this.project.videos[index], ...video };
             }
             if (this.currentVideoForTranscript && this.currentVideoForTranscript.id === video.id) {
-                 this.currentVideoForTranscript = {...this.currentVideoForTranscript, ...video};
+              this.currentVideoForTranscript = { ...this.currentVideoForTranscript, ...video };
+              this.parseVideoTranscript(this.currentVideoForTranscript);
             }
           }
           if (video.status === 'completed') {
@@ -154,20 +182,21 @@ export class ProjectView implements OnInit, OnDestroy {
         error: (err) => {
           this.snackBar.open(`Error polling video status: ${err.message}`, 'Close', { panelClass: 'snackbar-error' });
           console.error('Error polling video status:', err);
-           if (this.pollingSub) this.pollingSub.unsubscribe();
+          if (this.pollingSub) this.pollingSub.unsubscribe();
         }
       });
   }
 
   selectVideoForTranscript(video: Video): void {
     this.currentVideoForTranscript = video;
+    this.parseVideoTranscript(video);
     if (video.id && (video.status === 'processing' || video.status === 'uploaded')) {
-        this.pollVideoStatus(video.id);
+      this.pollVideoStatus(video.id);
     } else {
-        if (this.pollingSub) {
-            this.pollingSub.unsubscribe();
-            this.isPollingVideo = false;
-        }
+      if (this.pollingSub) {
+        this.pollingSub.unsubscribe();
+        this.isPollingVideo = false;
+      }
     }
   }
 
