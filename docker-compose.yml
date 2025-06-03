@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: video_processor_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: video_processor_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # Expose PostgreSQL port if needed for direct access
+
+  backend:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    container_name: video_processor_backend
+    restart: unless-stopped
+    # Changed command to run uvicorn as a Python module
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend-python:/app # Mount the backend code for development
+      - uploaded_videos:/app/uploaded_videos # Volume for storing uploaded videos
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/video_processor_db
+      OPENAI_API_KEY: YOUR_ACTUAL_OPENAI_API_KEY_HERE # Replace with your actual key or use Docker secrets
+      # Add other environment variables as needed
+
+  frontend:
+    build:
+      context: ./frontend-angular
+      dockerfile: Dockerfile # Assumes a Dockerfile that serves the built Angular app
+    container_name: video_processor_frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80" # Angular app served by Nginx on port 80 inside container, mapped to 4200 on host
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploaded_videos:

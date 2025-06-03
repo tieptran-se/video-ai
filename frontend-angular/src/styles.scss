@@ -1,0 +1,44 @@
+// Import Tailwind base styles, components, and utilities
+@import "tailwindcss";
+
+// Other global styles (e.g., Angular Material theme)
+@import '@angular/material/prebuilt-themes/indigo-pink.css'; // Or your custom theme
+
+html, body { height: 100%; } // Ensure html and body take full height
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif; 
+  background-color: #f4f7fa; // Slightly lighter background for a cleaner look
+  color: #333; // Default text color
+}
+
+// Custom snackbar styling
+.snackbar-success {
+  background-color: #4CAF50; // Material Green
+  color: white;
+}
+.snackbar-success .mat-simple-snackbar-action {
+  color: white !important;
+}
+
+.snackbar-error {
+  background-color: #f44336; // Material Red
+  color: white;
+}
+.snackbar-error .mat-simple-snackbar-action {
+  color: white !important;
+}
+
+// General card styling for consistency
+.mat-mdc-card {
+  border-radius: 8px !important; // Softer rounded corners for cards
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important; // Softer shadow
+}
+
+.mat-mdc-card-content, .mat-mdc-card-header {
+    padding: 16px !important;
+}
+
+.mdc-text-field--outlined .mat-mdc-notch-piece {
+    border-width: px !important;
+}

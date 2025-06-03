@@ -1,0 +1,49 @@
+@if (video) {
+  <div>
+    @if (video.status === 'completed' && getVideoSource()) {
+      <div class="mb-4">
+        <video #videoPlayer width="100%" style="max-width: 640px; margin: auto;" height="auto" controls [src]="getVideoSource()" type="video/mp4" class="rounded-lg shadow-md">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    } @else if (video.status === 'completed' && !getVideoSource()) {
+      <div class="text-gray-500 mb-4 p-4 border rounded-md text-center">
+        Video file path not available or video could not be loaded.
+      </div>
+    }
+
+    @if (video.status === 'completed' && transcriptSegments.length > 0) {
+      <div class="transcript-container border rounded-lg p-4 max-h-96 overflow-y-auto bg-white shadow">
+        <h4 class="text-lg font-medium mb-3 text-gray-700">Transcript:</h4>
+        <ul>
+          @for (segment of transcriptSegments; track segment.timestamp_start + segment.text) {
+            <li (click)="seekVideo(segment.timestamp_start)" class="transcript-segment p-3 mb-2 hover:bg-blue-50 rounded-md cursor-pointer transition-colors duration-150 ease-in-out border-b last:border-b-0">
+              <strong class="text-blue-600 block sm:inline-block mb-1 sm:mb-0 sm:mr-2">[{{ segment.timestamp_start }} - {{ segment.timestamp_end }}]</strong> 
+              <span class="text-gray-800">{{ segment.text }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    } @else if (video.status === 'completed' && transcriptSegments.length === 0) {
+      <div class="text-gray-500 p-4 border rounded-md text-center bg-gray-50">
+        <mat-icon class="text-4xl opacity-75">description</mat-icon>
+        <p class="mt-1">No transcript data found for this video, though processing is complete.</p>
+      </div>
+    }
+    
+    @if (video.status === 'failed') {
+      <div class="text-red-700 p-4 border border-red-300 bg-red-50 rounded-lg shadow">
+        <div class="flex items-center">
+          <mat-icon color="warn" class="mr-2">error_outline</mat-icon> 
+          <span class="font-semibold">Video processing failed for '{{video.filename}}'.</span>
+        </div>
+        @if (video.transcript && typeof video.transcript === 'string') {
+          <div class="mt-2">
+            <p class="text-sm text-gray-600">Error details:</p>
+            <pre class="text-xs bg-gray-100 p-2 mt-1 rounded overflow-y-auto">{{ video.transcript | json }}</pre>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}
