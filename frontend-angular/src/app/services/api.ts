@@ -50,4 +50,19 @@ export class Api {
     return this.http.get<Video>(`${this.baseUrl}/videos/${videoId}/status`)
       .pipe(catchError(this.handleError));
   }
+
+  generateMindmap(videoId: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/videos/${videoId}/generate-mindmap`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  generateQuiz(videoId: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/videos/${videoId}/generate-quiz`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  deleteVideo(projectId: number, videoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/projects/${projectId}/videos/${videoId}`)
+      .pipe(catchError(this.handleError));
+  }
 }

@@ -26,17 +26,46 @@ def create_video_for_project(db: Session, video: schemas.VideoCreate, project_id
     db.refresh(db_video)
     return db_video
 
-def update_video_status(db: Session, video_id: int, status: str, transcript: Optional[str] = None, summary: Optional[str] = None):
+def update_video_data(
+    db: Session, 
+    video_id: int, 
+    status: Optional[str] = None, 
+    transcript: Optional[str] = None, 
+    summary: Optional[str] = None,
+    mindmap_data: Optional[str] = None,
+    quiz_data: Optional[str] = None # Added quiz_data
+):
     db_video = db.query(models.Video).filter(models.Video.id == video_id).first()
     if db_video:
-        db_video.status = status
-        if transcript: 
+        if status is not None:
+            db_video.status = status
+        if transcript is not None: 
             db_video.transcript = transcript
-        if summary:
+        if summary is not None:
             db_video.summary = summary
+        if mindmap_data is not None: 
+            db_video.mindmap_data = mindmap_data
+        if quiz_data is not None: # Added quiz_data update
+            db_video.quiz_data = quiz_data
         db.commit()
         db.refresh(db_video)
     return db_video
 
 def get_video(db: Session, video_id: int):
     return db.query(models.Video).filter(models.Video.id == video_id).first()
+
+def delete_video(db: Session, video_id: int) -> Optional[models.Video]:
+    db_video = db.query(models.Video).filter(models.Video.id == video_id).first()
+    if db_video:
+        # Optional: Delete the actual file from the filesystem here
+        # if os.path.exists(db_video.filepath):
+        #     try:
+        #         os.remove(db_video.filepath)
+        #         print(f"Deleted video file: {db_video.filepath}")
+        #     except Exception as e:
+        #         print(f"Error deleting video file {db_video.filepath}: {e}")
+        
+        db.delete(db_video)
+        db.commit()
+        return db_video
+    return None

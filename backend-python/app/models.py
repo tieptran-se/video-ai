@@ -12,7 +12,7 @@ class Project(Base):
     name = Column(String, index=True, unique=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    videos = relationship("Video", back_populates="project")
+    videos = relationship("Video", back_populates="project", cascade="all, delete-orphan") # Added cascade delete
 
 class Video(Base):
     __tablename__ = "videos"
@@ -20,11 +20,12 @@ class Video(Base):
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"))
     filename = Column(String)
-    filepath = Column(String) # Path where the video is stored
-    status = Column(String, default="uploaded") # e.g., uploaded, processing, completed, failed
-    # Transcript will now store a JSON object: {"key_topics": [...], "segments": [...]}
+    filepath = Column(String) 
+    status = Column(String, default="uploaded") 
     transcript = Column(Text, nullable=True) 
-    summary = Column(Text, nullable=True) # Optional: if you generate a summary
+    summary = Column(Text, nullable=True) 
+    mindmap_data = Column(Text, nullable=True) 
+    quiz_data = Column(Text, nullable=True) # New field for quiz (JSON string)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
 
     project = relationship("Project", back_populates="videos")

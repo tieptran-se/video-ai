@@ -7,7 +7,11 @@ import { appRoutes } from './app.routes';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+import { MatDialogModule } from '@angular/material/dialog'; 
+import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatRadioModule } from '@angular/material/radio'; // For Quiz Dialog
+import { MatCheckboxModule } from '@angular/material/checkbox'; // For Quiz Dialog
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,9 +21,16 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(
       MatSnackBarModule,
       MatProgressSpinnerModule,
-      MatProgressBarModule
+      MatProgressBarModule,
+      MatSnackBarModule,
+      MatProgressSpinnerModule,
+      MatProgressBarModule,
+      MatIconModule,
+      MatTabsModule,
+      MatDialogModule,
+      MatRadioModule,
+      MatCheckboxModule
     ),
-    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000, verticalPosition: 'top' } },
-    { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } }
+    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000, verticalPosition: 'top' } }
   ]
 };

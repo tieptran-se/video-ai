@@ -17,119 +17,147 @@
     </button>
   </div>
 } @else if (project) {
-  <div class="space-y-8">
-    <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-300">
-      <button mat-icon-button (click)="goBackToProjects()" aria-label="Back to projects list" class="text-gray-600 hover:text-brand-blue">
-        <mat-icon>arrow_back_ios</mat-icon>
-      </button>
-      <h2 class="text-3xl font-semibold text-gray-800 flex items-center">
-        <mat-icon class="mr-3 text-3xl text-brand-blue">folder_special</mat-icon>
-        {{ project.name }}
-      </h2>
-      <span class="text-sm text-gray-500">ID: {{ project.id }}</span>
-    </div>
+  <!-- Main page header -->
+  <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-300">
+    <button mat-icon-button (click)="goBackToProjects()" aria-label="Back to projects list" class="text-gray-600 hover:text-brand-blue" matTooltip="Back to Projects">
+      <mat-icon>arrow_back_ios</mat-icon>
+    </button>
+    <h2 class="text-2xl lg:text-3xl font-semibold text-gray-800 flex items-center truncate px-2">
+      <mat-icon class="mr-2 lg:mr-3 text-2xl lg:text-3xl text-brand-blue">folder_special</mat-icon>
+      <span class="truncate" [title]="project.name">{{ project.name }}</span>
+    </h2>
+    <span class="text-xs lg:text-sm text-gray-500 whitespace-nowrap">ID: {{ project.id }}</span>
+  </div>
 
-    <mat-card class="p-2 sm:p-0">
-       <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
-        <mat-card-title class="text-xl font-medium text-slate-700">Project Details</mat-card-title>
-      </mat-card-header>
-      <mat-card-content class="p-4 space-y-2 text-gray-600">
-        <p><strong>Created:</strong> {{ project.created_at | date:'fullDate' }} at {{ project.created_at | date:'shortTime' }}</p>
-        <p><strong>Total Videos:</strong> <span class="font-semibold text-brand-blue">{{ project.videos?.length || 0 }}</span></p>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="p-2 sm:p-0">
-      <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
-        <mat-card-title class="text-xl font-medium text-slate-700">Upload New Video</mat-card-title>
-      </mat-card-header>
-      <mat-card-content class="p-4">
-        <app-video-upload [projectId]="project.id!" (videoProcessingStarted)="onVideoUploadStarted($event)"></app-video-upload>
-      </mat-card-content>
-    </mat-card>
-
-    @if (currentVideoForTranscript) {
-      <mat-card class="p-2 sm:p-0">
-         <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
-            <mat-card-title class="text-xl font-medium text-slate-700">
-                Video Details & Transcript: <span class="font-semibold text-brand-blue">{{ currentVideoForTranscript.filename }}</span>
-            </mat-card-title>
-         </mat-card-header>
-        <mat-card-content class="p-4">
-          @if (currentVideoForTranscript.status === 'processing' || (currentVideoForTranscript.status === 'uploaded' && isPollingVideo)) {
-            <div class="flex flex-col items-center justify-center p-6 my-4 border border-blue-200 bg-blue-50 rounded-lg text-blue-700">
-              <mat-spinner [diameter]="50" color="accent" class="mb-3"></mat-spinner>
-              <p class="font-medium">Video '{{currentVideoForTranscript.filename}}' is currently processing...</p>
-              <p class="text-sm">This may take a few moments. We'll update the status automatically.</p>
-            </div>
-          }
-          <app-transcript-display [video]="currentVideoForTranscript" [parsedTranscriptData]="parsedTranscript"></app-transcript-display>
-        </mat-card-content>
-      </mat-card>
-    } @else if (project.videos?.length === 0) {
-        <div class="text-center text-gray-500 py-10 bg-white rounded-lg shadow-sm border border-dashed border-gray-300">
-            <mat-icon class="text-6xl opacity-40 mb-3">video_call</mat-icon>
-            <p class="text-xl font-medium mb-2">No Videos in This Project Yet</p>
-            <p class="text-gray-600">Upload a video to get started with transcription.</p>
-        </div>
-    }
-
-    @if (project.videos && project.videos.length > 0) {
-      <mat-card class="p-2 sm:p-0">
-        <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
-            <mat-card-title class="text-xl font-medium text-slate-700">Project Video Library</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="p-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              @for (vid of project.videos; track vid.id) {
-                <div matRipple
-                     (click)="selectVideoForTranscript(vid)"
-                     class="video-item-card bg-white rounded-lg border border-gray-200 p-4 cursor-pointer transition-all duration-200 ease-in-out hover:shadow-xl hover:border-brand-blue-500/50 group flex flex-col justify-between"
-                     [class.ring-2]="currentVideoForTranscript?.id === vid.id"
-                     [class.ring-brand-blue]="currentVideoForTranscript?.id === vid.id"
-                     [class.shadow-lg]="currentVideoForTranscript?.id === vid.id">
-                  
-                  <div>
-                    <div class="flex items-start mb-3">
-                      <mat-icon class="mr-3 text-2xl mt-0.5 !overflow-visible" [ngClass]="{
-                        'text-green-500': vid.status === 'completed',
-                        'text-red-500': vid.status === 'failed',
-                        'text-yellow-500 animate-pulse': isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded'),
-                        'text-gray-400': !isPollingVideo || currentVideoForTranscript?.id !== vid.id
-                      }">
-                        {{ vid.status === 'completed' ? 'check_circle_outline'
-                        : (vid.status === 'failed' ? 'error_outline'
-                        : (isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded') ? 'sync' : 'hourglass_outline')) }}
-                      </mat-icon>
-                      <h3 class="text-md font-semibold text-gray-800 group-hover:text-brand-blue leading-tight !m-0" [title]="vid.filename">
-                        {{ vid.filename }}
-                      </h3>
-                    </div>
-
-                    <div class="text-xs text-gray-500 mb-2 space-y-0.5">
-                      <p>Status: 
-                        <span class="font-medium capitalize" [ngClass]="{
-                          'text-green-600': vid.status === 'completed',
-                          'text-red-600': vid.status === 'failed',
-                          'text-yellow-600': vid.status === 'processing' || vid.status === 'uploaded'
-                        }">{{ vid.status }}</span>
-                      </p>
-                      <p>Uploaded: {{ vid.uploaded_at | date:'shortDate' }} {{ vid.uploaded_at | date:'shortTime' }}</p>
-                    </div>
+  <!-- Two-column layout for larger screens -->
+  <div class="project-view-layout"> 
+    <!-- Main Content: Video Player and Analysis -->
+    <div class="main-content-area space-y-6">
+      @if (currentVideoForTranscript) {
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+          <!-- Toolbar for Video Actions -->
+          <div class="video-actions-toolbar bg-slate-100 p-3 border-b border-gray-200 flex flex-wrap justify-between items-center gap-2 sticky top-0 z-20">
+            <h3 class="text-lg font-semibold text-slate-700 truncate" [title]="currentVideoForTranscript.filename">
+              {{ currentVideoForTranscript.filename }}
+            </h3>
+            <div class="flex items-center gap-2 flex-wrap">
+              @if (currentVideoForTranscript.status === 'completed' && !currentVideoForTranscript.mindmap_data && !isGeneratingMindmap && !isGeneratingQuiz) {
+                <button mat-flat-button color="primary" (click)="triggerMindmapGeneration(currentVideoForTranscript.id)" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="Generate a mind map from the transcript">
+                  <mat-icon class="mr-1 !text-base">auto_awesome</mat-icon> Gen Mind Map
+                </button>
+              }
+              @if (currentVideoForTranscript.status === 'completed' && currentVideoForTranscript.mindmap_data && !isGeneratingMindmap) {
+                <button mat-flat-button color="accent" (click)="openMindmapDialog()" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="View the generated mind map">
+                  <mat-icon class="mr-1 !text-base">account_tree</mat-icon> View Mind Map
+                </button>
+              }
+              @if (currentVideoForTranscript.status === 'completed' && !currentVideoForTranscript.quiz_data && !isGeneratingQuiz && !isGeneratingMindmap) {
+                <button mat-flat-button color="primary" (click)="triggerQuizGeneration(currentVideoForTranscript.id)" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="Generate a quiz from the transcript">
+                  <mat-icon class="mr-1 !text-base">quiz</mat-icon> Generate Quiz
+                </button>
+              }
+              @if (currentVideoForTranscript.status === 'completed' && currentVideoForTranscript.quiz_data && !isGeneratingQuiz) {
+                <button mat-flat-button color="accent" (click)="openQuizDialog()" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="View the generated quiz">
+                  <mat-icon class="mr-1 !text-base">school</mat-icon> View Quiz
+                </button>
+              }
+              @if ((isGeneratingMindmap && currentVideoForTranscript.status === 'generating_mindmap') || (isGeneratingQuiz && currentVideoForTranscript.status === 'generating_quiz')) {
+                  <div class="flex items-center text-sm text-purple-600 p-2 bg-purple-50 rounded-md">
+                      <mat-spinner [diameter]="18" color="accent" class="mr-2"></mat-spinner>
+                      <span>
+                        @if(isGeneratingMindmap) { Generating Mind Map... }
+                        @if(isGeneratingQuiz) { Generating Quiz... }
+                      </span>
                   </div>
-                  
-                  <div class="mt-auto pt-3 text-right border-t border-gray-100 -mx-4 px-4 -mb-4 pb-3 group-hover:bg-slate-50 rounded-b-lg transition-colors">
-                     <button mat-stroked-button (click)="selectVideoForTranscript(vid); $event.stopPropagation()" 
-                             color="primary"
-                             class="text-xs !min-w-0 !px-3 !py-1 !leading-none rounded-full group-hover:bg-brand-blue group-hover:text-white group-hover:border-brand-blue">
-                      </button>
-                  </div>
-                </div>
               }
             </div>
+          </div>
+          <app-transcript-display [video]="currentVideoForTranscript" [parsedTranscriptData]="parsedTranscript"></app-transcript-display>
+        </div>
+      } @else if (project.videos?.length) {
+        <div class="no-video-selected-placeholder text-center text-gray-500 py-10 bg-white rounded-lg shadow-sm border border-dashed border-gray-300 h-full flex flex-col justify-center items-center min-h-[400px]">
+            <mat-icon class="text-6xl opacity-40 mb-3">ondemand_video</mat-icon>
+            <p class="text-xl font-medium mb-2">Select a Video</p>
+            <p class="text-gray-600">Choose a video from the library on the right to view its details and transcript.</p>
+        </div>
+      } @else {
+        <div class="no-videos-placeholder text-center text-gray-500 py-10 bg-white rounded-lg shadow-sm border border-dashed border-gray-300 h-full flex flex-col justify-center items-center min-h-[400px]">
+            <mat-icon class="text-6xl opacity-40 mb-3">video_call</mat-icon>
+            <p class="text-xl font-medium mb-2">No Videos in This Project Yet</p>
+            <p class="text-gray-600">Upload a video using the panel on the right to get started.</p>
+        </div>
+      }
+    </div>
+
+    <!-- Sidebar: Upload and Video Library -->
+    <aside class="sidebar-area space-y-6">
+      <mat-card class="p-0">
+        <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+          <mat-card-title class="text-lg font-medium text-slate-700 flex items-center">
+            <mat-icon class="mr-2">cloud_upload</mat-icon> Upload New Video
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="p-4">
+          <app-video-upload [projectId]="project.id!" (videoProcessingStarted)="onVideoUploadStarted($event)"></app-video-upload>
         </mat-card-content>
       </mat-card>
-    }
+
+      @if (project.videos && project.videos.length > 0) {
+        <mat-card class="p-0">
+          <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+              <mat-card-title class="text-lg font-medium text-slate-700 flex items-center">
+                <mat-icon class="mr-2">video_library</mat-icon> Project Video Library
+              </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="p-0"> 
+              <mat-list class="max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto">
+                @for (vid of project.videos; track vid.id) {
+                  <mat-list-item matRipple
+                               (click)="selectVideoForTranscript(vid)"
+                               class="video-list-item-sidebar h-auto py-3 px-4 transition-colors duration-150 ease-in-out group focus-within:bg-blue-50"
+                               [ngClass]="{'bg-blue-100 border-l-4 border-brand-blue': currentVideoForTranscript?.id === vid.id, 'hover:bg-gray-100': currentVideoForTranscript?.id !== vid.id}">
+                    <mat-icon matListItemIcon class="text-xl self-center" [ngClass]="{
+                      'text-green-500': vid.status === 'completed',
+                      'text-red-500': vid.status === 'failed',
+                      'text-yellow-500': (vid.status === 'processing' || vid.status === 'uploaded') && (!isPollingVideo || currentVideoForTranscript?.id !== vid.id),
+                      'text-yellow-500 animate-spin': isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded'),
+                      'text-purple-500 animate-spin': vid.status === 'generating_mindmap' || vid.status === 'generating_quiz',
+                      'text-gray-400': vid.status !== 'completed' && vid.status !== 'failed' && vid.status !== 'generating_mindmap' && vid.status !== 'generating_quiz' && !(isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded'))
+                    }">
+                      {{ vid.status === 'completed' ? 'check_circle'
+                      : (vid.status === 'failed' ? 'error'
+                      : (vid.status === 'generating_mindmap' ? 'psychology'
+                      : (vid.status === 'generating_quiz' ? 'school' 
+                      : ((isPollingVideo && currentVideoForTranscript?.id === vid.id && (vid.status === 'processing' || vid.status === 'uploaded')) ? 'sync' : 'hourglass_empty')))) }}
+                    </mat-icon>
+                    <div matListItemTitle class="font-medium text-gray-700 group-hover:text-brand-blue text-sm truncate" [title]="vid.filename">{{ vid.filename }}</div>
+                    <div matListItemLine class="text-xs text-gray-500">
+                      Status: 
+                      <span class="font-semibold capitalize" [ngClass]="{
+                        'text-green-600': vid.status === 'completed',
+                        'text-red-600': vid.status === 'failed',
+                        'text-yellow-600': vid.status === 'processing' || vid.status === 'uploaded',
+                        'text-purple-600': vid.status === 'generating_mindmap' || vid.status === 'generating_quiz'
+                      }">{{ vid.status }}</span>
+                    </div>
+                     <div matListItemLine class="text-xs text-gray-400">Uploaded: {{ vid.uploaded_at | date:'short' }}</div>
+                     <button mat-icon-button [matMenuTriggerFor]="videoItemMenu" aria-label="Video actions" class="ml-auto -mr-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity" (click)="$event.stopPropagation()">
+                        <mat-icon>more_vert</mat-icon>
+                     </button>
+                     <mat-menu #videoItemMenu="matMenu">
+                        <button mat-menu-item (click)="confirmDeleteVideo($event, vid.id, vid.filename)">
+                            <mat-icon color="warn">delete_outline</mat-icon>
+                            <span>Delete Video</span>
+                        </button>
+                     </mat-menu>
+                  </mat-list-item>
+                  <mat-divider></mat-divider>
+                }
+              </mat-list>
+          </mat-card-content>
+        </mat-card>
+      }
+    </aside>
   </div>
 } @else {
   <div class="text-center text-gray-500 py-16">

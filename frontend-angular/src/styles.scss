@@ -1,7 +1,7 @@
 // Import Tailwind base styles, components, and utilities
 @import "tailwindcss";
 
-/// Other global styles (e.g., Angular Material theme)
+// Other global styles (e.g., Angular Material theme)
 @import '@angular/material/prebuilt-themes/indigo-pink.css'; // Or your custom theme
 
 html, body { height: 100%; }

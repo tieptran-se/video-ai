@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, BackgroundTasks, Response, status as http_status
 from sqlalchemy.orm import Session
 import shutil
 import os
 import uuid
-from typing import List
+from typing import List, Optional 
 
 from .. import crud, schemas, database, models 
-from ..services import video_processor 
+from ..services import transcription_service 
 
 router = APIRouter(
     prefix="/projects",
@@ -46,8 +46,8 @@ async def upload_video_for_project_endpoint(
         raise HTTPException(status_code=404, detail="Project not found")
 
     unique_id = uuid.uuid4()
-    file_extension = os.path.splitext(file.filename)[1]
-    if not file_extension:
+    file_extension = os.path.splitext(file.filename)[1] if file.filename else ".mp4" 
+    if not file_extension: 
         file_extension = ".mp4"
     unique_filename = f"{unique_id}{file_extension}"
     
@@ -62,16 +62,38 @@ async def upload_video_for_project_endpoint(
         print(f"Error saving video: {e}")
         raise HTTPException(status_code=500, detail=f"Could not save video file: {e}")
     finally:
-        if file: # Ensure file object exists before trying to close
+        if file and hasattr(file, 'file') and file.file: 
             file.file.close()
 
     video_data = schemas.VideoCreate(filename=file.filename if file.filename else unique_filename)
     db_video = crud.create_video_for_project(db=db, video=video_data, project_id=project_id, filepath=file_path)
     
-    crud.update_video_status(db=db, video_id=db_video.id, status="processing")
+    crud.update_video_data(db=db, video_id=db_video.id, status="processing")
     print(f"Video ID {db_video.id} status set to processing.")
 
-    background_tasks.add_task(video_processor.transcribe_video_with_openai, file_path, db_video.id, database.SessionLocal)
+    background_tasks.add_task(transcription_service.transcribe_video_with_openai, file_path, db_video.id, database.SessionLocal)
     print(f"Background task added for video ID {db_video.id}")
     
-    return db_video
+    updated_db_video = crud.get_video(db=db, video_id=db_video.id)
+    return updated_db_video if updated_db_video else db_video
+
+@router.delete("/{project_id}/videos/{video_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+def delete_video_from_project_endpoint(
+    project_id: int, # Keep project_id for path consistency, though not strictly needed if video_id is globally unique
+    video_id: int,
+    db: Session = Depends(database.get_db)
+):
+    db_video = crud.get_video(db, video_id=video_id)
+    if not db_video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if db_video.project_id != project_id: # Ensure video belongs to the project
+        raise HTTPException(status_code=403, detail="Video does not belong to this project")
+    
+    deleted_video = crud.delete_video(db, video_id=video_id)
+    if not deleted_video: # Should not happen if previous check passed, but good for safety
+        raise HTTPException(status_code=404, detail="Video not found during deletion attempt")
+    
+    # If you delete the file from filesystem in crud.delete_video, no further action here.
+    # Otherwise, you might trigger a background task for file cleanup if needed.
+    print(f"Video ID {video_id} deleted from project ID {project_id}")
+    return Response(status_code=http_status.HTTP_204_NO_CONTENT)

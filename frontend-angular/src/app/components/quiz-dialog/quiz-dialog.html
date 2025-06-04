@@ -1,0 +1,87 @@
+<div class="flex flex-col h-full">
+  <header class="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
+    <h2 mat-dialog-title class="text-xl font-semibold mb-0 truncate" [title]="data.quiz.title + ' for ' + data.videoName">
+      {{ data.quiz.title }}
+    </h2>
+    <button mat-icon-button (click)="closeDialog()" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="flex-grow p-6 quiz-content">
+    @if (!showResults) {
+      <form #quizForm="ngForm" (ngSubmit)="submitQuiz()">
+        @for (question of data.quiz.questions; track $index; let qIndex = $index) {
+          <div class="mb-6 p-4 border rounded-lg shadow-sm bg-white">
+            <p class="font-medium text-gray-700 mb-3">{{ qIndex + 1 }}. {{ question.question_text }}</p>
+            
+            @if (question.question_type === 'single-choice') {
+              <mat-radio-group class="flex flex-col space-y-2" 
+                               [name]="'question-' + qIndex"
+                               (change)="onSingleChoiceChange(qIndex, $event.value)">
+                @for (option of question.options; track $index; let optIndex = $index) {
+                  <mat-radio-button [value]="option.text" class="text-sm text-gray-600">{{ option.text }}</mat-radio-button>
+                }
+              </mat-radio-group>
+            }
+
+            @if (question.question_type === 'multiple-choice') {
+              <div class="flex flex-col space-y-2">
+                @for (option of question.options; track $index; let optIndex = $index) {
+                  <mat-checkbox (change)="onMultiChoiceChange(qIndex, option.text, $event)" 
+                                [checked]="isOptionSelectedForMulti(qIndex, option.text)"
+                                class="text-sm text-gray-600">
+                    {{ option.text }}
+                  </mat-checkbox>
+                }
+              </div>
+            }
+          </div>
+        }
+        <button mat-raised-button color="primary" type="submit" class="w-full h-11 rounded-md">Submit Quiz</button>
+      </form>
+    } @else {
+      <div class="results-summary p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6">
+        <h3 class="text-xl font-semibold text-blue-700 mb-2">Quiz Results</h3>
+        <p class="text-lg text-gray-700">You scored: <span class="font-bold text-blue-600">{{ score }}</span> out of <span class="font-bold">{{ data.quiz.questions.length }}</span></p>
+      </div>
+
+      @for (question of data.quiz.questions; track $index; let qIndex = $index) {
+        <mat-expansion-panel class="mb-3 rounded-lg shadow-sm" [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="font-medium text-gray-700">
+              Q{{qIndex + 1}}: {{ question.question_text }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="p-4">
+            <ul class="list-disc pl-5 space-y-1 text-sm">
+              @for (option of question.options; track $index) {
+                <li [ngClass]="getOptionClasses(option, question, qIndex)">
+                  {{ option.text }} 
+                  <!-- Use the new method for icon display -->
+                  @if (getOptionResultIconDetails(option, question, qIndex); as iconDetails) {
+                    @if (iconDetails) {
+                      <mat-icon class="text-sm align-middle ml-1 {{iconDetails.iconClass}}">{{ iconDetails.iconName }}</mat-icon>
+                    }
+                  }
+                </li>
+              }
+            </ul>
+            @if (question.explanation) {
+              <p class="mt-3 text-xs text-gray-500 bg-gray-50 p-2 rounded-md">
+                <span class="font-semibold">Explanation:</span> {{ question.explanation }}
+              </p>
+            }
+          </div>
+        </mat-expansion-panel>
+      }
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="p-4 border-t">
+    @if (showResults) {
+      <button mat-stroked-button (click)="showResults = false; userAnswers = {}; score = 0;">Retake Quiz</button>
+    }
+    <button mat-flat-button color="primary" (click)="closeDialog()">Close</button>
+  </mat-dialog-actions>
+</div>

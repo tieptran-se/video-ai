@@ -1,0 +1,46 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.project-view-layout {
+  display: flex;
+  flex-direction: column; 
+
+  @media (min-width: 1024px) { // lg breakpoint from Tailwind
+    flex-direction: row;
+    gap: 2rem; 
+  }
+}
+
+.main-content-area {
+  flex-grow: 1; 
+  min-width: 0; 
+  @media (min-width: 1024px) {
+    flex-basis: 66.666667%; 
+  }
+}
+
+.sidebar-area {
+  width: 100%; 
+  @media (min-width: 1024px) { 
+    width: 320px; 
+    flex-shrink: 0; 
+  }
+  @media (min-width: 1280px) { 
+    width: 384px; 
+  }
+}
+
+.video-actions-toolbar {
+  // Styles for the new toolbar
+}
+
+.video-list-item-sidebar {
+  .mat-icon {
+    transition: color 0.2s ease-in-out;
+  }
+  &:hover .mat-icon {
+    color: var(--mdc-protected-button-label-text-color); 
+  }
+}

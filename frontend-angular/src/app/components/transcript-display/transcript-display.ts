@@ -1,11 +1,11 @@
 import { CommonModule, JsonPipe } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { Video, TranscriptSegment, VideoTranscript, KeyMoment } from '../../models/models';
 import { MatCardModule } from '@angular/material/card';
-import { MatTabsModule } from '@angular/material/tabs'; 
 import { MatListModule } from '@angular/material/list'; 
 import { MatDividerModule } from '@angular/material/divider';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'app-transcript-display',
@@ -14,15 +14,15 @@ import { MatDividerModule } from '@angular/material/divider';
     CommonModule,
     JsonPipe,
     MatIconModule,
-    MatCardModule,
-    MatTabsModule, 
+    MatCardModule, // Keep if you might wrap content in cards later
+    MatTabsModule,
     MatListModule,
-    MatDividerModule   
+    MatDividerModule
   ],
   templateUrl: './transcript-display.html',
   styleUrls: ['./transcript-display.scss']
 })
-export class TranscriptDisplay implements OnChanges, OnDestroy {
+export class TranscriptDisplay implements OnChanges, OnDestroy, AfterViewInit {
   @Input() video: Video | null = null;
   @Input() parsedTranscriptData: VideoTranscript | null = null; 
 
@@ -36,7 +36,10 @@ export class TranscriptDisplay implements OnChanges, OnDestroy {
   public baseUrlForVideos = 'http://localhost:8000/static_videos';
   private timeUpdateListener?: () => void;
 
-  constructor(private renderer: Renderer2, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private renderer: Renderer2, 
+    private cdr: ChangeDetectorRef
+    ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['parsedTranscriptData'] && this.parsedTranscriptData) {
@@ -77,6 +80,10 @@ export class TranscriptDisplay implements OnChanges, OnDestroy {
             }
         }
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.setupVideoListener();
   }
 
   setupVideoListener(): void {

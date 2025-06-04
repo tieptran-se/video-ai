@@ -1,0 +1,28 @@
+<div class="flex flex-col h-full">
+  <header class="flex items-center justify-between p-4 border-b">
+    <h2 mat-dialog-title class="text-xl font-semibold mb-0">Mind Map: {{ data.videoName }}</h2>
+    <button mat-icon-button (click)="closeDialog()" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="flex-grow p-0 relative">
+    @if(isLoadingMarkmap) {
+      <div class="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
+        <mat-progress-spinner mode="indeterminate" [diameter]="50"></mat-progress-spinner>
+      </div>
+    }
+    <svg #markmapDialogContainer class="w-full h-full min-h-[300px]"></svg>
+    
+    @if(!isLoadingMarkmap && !data.markdown) {
+      <div class="p-6 text-center text-gray-500">
+        <mat-icon class="text-5xl opacity-50 mb-2">search_off</mat-icon>
+        <p>No mind map data available to display.</p>
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="p-4 border-t">
+    <button mat-stroked-button (click)="closeDialog()">Close</button>
+  </mat-dialog-actions>
+</div>

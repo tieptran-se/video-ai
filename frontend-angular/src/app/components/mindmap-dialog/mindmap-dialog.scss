@@ -1,0 +1,12 @@
+// Optional: Add specific styles for the dialog if needed
+:host {
+  display: flex; // Ensure the host takes up the dialog's flex space
+  flex-direction: column;
+  height: 100%; // Make the host fill the dialog container
+}
+
+// Ensure the SVG itself can grow
+svg.markmap {
+  width: 100%;
+  height: 100%;
+}
