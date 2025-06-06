@@ -57,7 +57,7 @@ export class Api {
   }
 
   getVideoStatus(videoId: number): Observable<Video> {
-    return this.http.get<Video>(`${this.baseUrl}/videos/${videoId}/status`)
+    return this.http.get<Video>(`${this.baseUrl}/videos/${videoId}`)
       .pipe(catchError(this.handleError));
   }
 

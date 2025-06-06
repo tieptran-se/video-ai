@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, Subject, timer, switchMap, takeWhile, finalize } from 'rxjs';
 import { Project, QuizData, Video, VideoTranscript } from '../../models/models';
 import { TranscriptDisplay } from '../transcript-display/transcript-display';
@@ -70,6 +70,7 @@ export class ProjectView implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
+    private activatedRoute: ActivatedRoute,
     private apiService: Api,
     private snackBar: MatSnackBar,
     public dialog: MatDialog
@@ -140,14 +141,27 @@ export class ProjectView implements OnInit, OnDestroy {
   }
 
   private determineInitialVideoForTranscript(): void {
+    const queryParamVideoId = this.activatedRoute.snapshot.queryParams['videoId'];
+    if (queryParamVideoId && this.project?.videos) {
+        const videoFromQuery = this.project.videos.find(v => v.id == queryParamVideoId);
+        if (videoFromQuery) {
+            this.selectVideoForTranscript(videoFromQuery);
+            this.router.navigate([], {
+                relativeTo: this.activatedRoute,
+                queryParams: { videoId: null },
+                queryParamsHandling: 'merge', 
+            });
+            return;
+        }
+    }
+
     if (this.project?.videos?.length) {
       const inProgressVideo = this.project.videos.find(v => ['processing', 'generating_mindmap', 'generating_quiz', 'uploaded'].includes(v.status || ''));
       if (inProgressVideo) {
         this.selectVideoForTranscript(inProgressVideo);
         return;
       }
-      const completedVideos = this.project.videos.filter(v => v.status === 'completed');
-      this.selectVideoForTranscript(completedVideos.length ? completedVideos[0] : this.project.videos[0]);
+      this.selectVideoForTranscript(this.project.videos[0]);
     } else {
         this.currentVideoForTranscript = null;
         this.parsedTranscript = null;
@@ -160,7 +174,7 @@ export class ProjectView implements OnInit, OnDestroy {
         if (!this.project.videos) this.project.videos = [];
         this.project.videos.unshift(video);
         this.selectVideoForTranscript(video);
-        this.snackBar.open(`Video "${video.filename}" uploaded and is now processing.`, 'Close', { panelClass: 'snackbar-success' });
+        this.snackBar.open(`Video "${video.filename}" upload started and is now processing.`, 'Close');
     }
   }
 
@@ -189,7 +203,7 @@ export class ProjectView implements OnInit, OnDestroy {
       let action = 'OK';
       if (this.isGeneratingMindmap && finalVideoState.mindmap_data) {
         message = `Mind map for "${finalVideoState.filename}" generated successfully!`;
-        this.isGeneratingMindmap = false;
+        this.isGeneratingMindmap = false; 
       } else if (this.isGeneratingQuiz && finalVideoState.quiz_data) {
         message = `Quiz for "${finalVideoState.filename}" generated successfully!`;
         this.isGeneratingQuiz = false;
@@ -222,21 +236,23 @@ export class ProjectView implements OnInit, OnDestroy {
     }
   }
 
-  triggerMindmapGeneration(videoId: number | undefined): void {
-    if (!videoId || this.isGeneratingMindmap || this.isGeneratingQuiz) return;
+  triggerMindmapGeneration(): void {
+    if (!this.currentVideoForTranscript?.id || this.isGeneratingMindmap || this.isGeneratingQuiz) return;
+    const videoId = this.currentVideoForTranscript.id;
     this.isGeneratingMindmap = true;
     this.updateVideoStatusOptimistically(videoId, 'generating_mindmap', { mindmap_data: null });
     this.apiService.generateMindmap(videoId).subscribe({
       next: (response) => {
         this.snackBar.open(response.message, 'OK', { duration: 2000 });
-        this.pollVideoStatus(videoId);
+        this.pollVideoStatus(videoId); 
       },
       error: (err) => this.handleGenerationError(err, videoId, 'mind map')
     });
   }
 
-  triggerQuizGeneration(videoId: number | undefined): void {
-    if (!videoId || this.isGeneratingQuiz || this.isGeneratingMindmap) return;
+  triggerQuizGeneration(): void {
+    if (!this.currentVideoForTranscript?.id || this.isGeneratingQuiz || this.isGeneratingMindmap) return;
+    const videoId = this.currentVideoForTranscript.id;
     this.isGeneratingQuiz = true;
     this.updateVideoStatusOptimistically(videoId, 'generating_quiz', { quiz_data: null });
     this.apiService.generateQuiz(videoId).subscribe({
@@ -257,7 +273,7 @@ export class ProjectView implements OnInit, OnDestroy {
   }
 
   handleGenerationError(err: any, videoId: number, type: 'mind map' | 'quiz'): void {
-    this.snackBar.open(`Error starting ${type} generation: ${err.message}`, 'Close', { panelClass: 'snackbar-error' });
+    this.snackBar.open(`Error starting ${type} generation: ${err.message}`, 'Close', {panelClass: 'snackbar-error'});
     this.updateVideoStatusOptimistically(videoId, 'completed', {});
     if (type === 'mind map') this.isGeneratingMindmap = false;
     if (type === 'quiz') this.isGeneratingQuiz = false;
@@ -266,21 +282,21 @@ export class ProjectView implements OnInit, OnDestroy {
   openMindmapDialog(): void {
     if (this.currentVideoForTranscript?.mindmap_data) {
       this.dialog.open(MindmapDialog, {
-        width: '90vw', maxWidth: '1200px', height: '85vh',
+        width: '90vw', maxWidth: '1200px', height: '75vh',
         data: { markdown: this.currentVideoForTranscript.mindmap_data, videoName: this.currentVideoForTranscript.filename }
       });
-    } else this.snackBar.open('Mind map data not available.', 'Close');
+    } else this.snackBar.open('Mind map data is not available.', 'Close');
   }
 
   openQuizDialog(): void {
     if (this.currentVideoForTranscript && this.parsedQuizData) {
       this.dialog.open(QuizDialog, {
-        width: '80vw', maxWidth: '95vw', maxHeight: '90vh',
+        width: '85vw', maxWidth: '90vw', maxHeight: '90vh',
         data: { quiz: this.parsedQuizData, videoName: this.currentVideoForTranscript.filename }
       });
-    } else this.snackBar.open('Quiz data not available.', 'Close');
+    } else this.snackBar.open('Quiz data is not available.', 'Close');
   }
-
+  
   confirmDeleteVideo(event: MouseEvent, video: Video): void {
     event.stopPropagation(); 
     if (!video.id || !this.project?.id) return;

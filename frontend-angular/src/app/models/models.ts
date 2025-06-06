@@ -47,7 +47,7 @@ export interface Video {
   filename: string;
   filepath?: string;
   status?: 'uploaded' | 'processing' | 'completed' | 'failed' | 'generating_mindmap' | 'generating_quiz';
-  transcript?: string | VideoTranscript; 
+  transcript?: string | VideoTranscript | null; 
   summary?: string;
   mindmap_data?: string | null;
   quiz_data?: string | QuizData | null;
@@ -57,6 +57,7 @@ export interface Video {
   uploaded_at?: string;
 }
 
+// Schema for public video view
 export interface PublicVideoData extends Omit<Video, 'project_id' | 'status' | 'is_public' | 'public_slug' | 'transcript' | 'quiz_data'> {
  project_name: string;
  transcript?: VideoTranscript | null; 

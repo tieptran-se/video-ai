@@ -4,20 +4,24 @@
   <button mat-stroked-button (click)="triggerFileInput()" 
           class="w-full h-16 border-2 border-dashed border-gray-300 hover:border-brand-blue text-gray-500 hover:text-brand-blue transition-colors rounded-lg flex flex-row items-center justify-center" 
           [disabled]="isUploading">
-    <mat-icon class="text-3xl mb-1">{{ selectedFile ? 'movie' : 'attach_file' }}</mat-icon>
-    <span>{{ selectedFile ? selectedFile.name : 'Choose Video or Audio File' }}</span>
+    <span class="flex items-center">
+      <mat-icon class="mr-2">{{ selectedFile ? 'movie' : 'attach_file' }}</mat-icon>
+      <span>{{ selectedFile ? selectedFile.name : 'Choose Video or Audio File' }}</span>
+    </span>
   </button>
 
   @if (selectedFile) {
-    <button mat-raised-button color="primary" (click)="onUpload()" [disabled]="isUploading" class="w-full h-12 flex items-center justify-center text-base rounded-md shadow-md hover:shadow-lg transition-shadow">
+    <button mat-raised-button color="primary" (click)="onUpload()" [disabled]="isUploading" class="w-full h-12 flex flex-row items-center justify-center text-base rounded-md shadow-md hover:shadow-lg transition-shadow">
       @if (!isUploading) {
         <span class="flex items-center">
           <mat-icon class="mr-2">cloud_upload</mat-icon>
           <span>Upload & Transcribe</span>
         </span>
       } @else {
-        <mat-spinner [diameter]="24" class="inline-block mr-2"></mat-spinner>
-        <span>Uploading...</span>
+        <span class="flex items-center">
+          <mat-spinner [diameter]="24" class="inline-block mr-2"></mat-spinner>
+          <span>Uploading...</span>
+        </span>
       }
     </button>
   }

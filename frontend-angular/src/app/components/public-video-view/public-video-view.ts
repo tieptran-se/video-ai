@@ -103,7 +103,7 @@ export class PublicVideoView implements OnInit {
   openMindmapDialog(): void {
     if (this.videoData && this.videoData.mindmap_data) {
       this.dialog.open(MindmapDialog, {
-        width: '90vw', maxWidth: '1200px', height: '85vh',
+        width: '90vw', maxWidth: '1200px', height: '75vh',
         data: { markdown: this.videoData.mindmap_data, videoName: this.videoData.filename }
       });
     } else {

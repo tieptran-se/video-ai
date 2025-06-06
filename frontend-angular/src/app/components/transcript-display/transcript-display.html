@@ -2,7 +2,7 @@
   <div class="transcript-display-grid">
     <!-- Left Column: Video Player or Status -->
     <div class="video-player-container rounded-lg overflow-hidden bg-black flex justify-center items-center">
-      @if (video.status === 'completed' || video.status === 'generating_mindmap' || video.status === 'generating_quiz') {
+      @if (shouldShowVideoPlayer()) {
         @if (getVideoSource(); as videoUrl) {
           <video #videoPlayer 
                 width="100%" height="auto" controls 
@@ -21,14 +21,14 @@
         <!-- For processing or other states, show a spinner -->
         <div class="placeholder-wrapper aspect-video flex flex-col justify-center items-center text-gray-400 bg-gray-900">
           <mat-spinner [diameter]="50" color="primary"></mat-spinner>
-          <p class="mt-4 text-lg">Processing Video...</p>
+          <p class="mt-4 text-lg pl-4 pr-4">Processing Transcript...</p>
         </div>
       }
     </div>
 
     <!-- Right Column: Transcript and Analysis -->
     <div class="analysis-container bg-white rounded-lg shadow-inner overflow-hidden">
-      @if (video.status === 'completed' || video.status === 'generating_mindmap' || video.status === 'generating_quiz') {
+      @if (shouldShowVideoPlayer()) {
         @if (parsedTranscriptData && ((parsedTranscriptData.segments?.length ?? 0) > 0 || (parsedTranscriptData.key_moments?.length ?? 0) > 0)) {
           <mat-tab-group animationDuration="0ms" mat-stretch-tabs="false" mat-align-tabs="start" class="h-full flex flex-col">
             @if (segments.length > 0) {

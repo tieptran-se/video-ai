@@ -3,16 +3,29 @@
   width: 100%;
 }
 
-.video-library-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+.project-view-layout {
+  display: grid;
+  grid-template-columns: 1fr; // Single column on mobile
+  gap: 1.5rem;
+
+  @media (min-width: 1024px) { // lg breakpoint
+    // Main content takes remaining space, sidebar has fixed width
+    grid-template-columns: minmax(0, 1fr) 384px; 
+  }
 }
 
-.video-item-card {
-    transition: all 0.3s ease-in-out;
-    &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
-    }
+.main-content-area {
+  min-width: 0; // Important for flex/grid items to prevent overflow
+}
+
+.sidebar-area {
+  width: 100%;
+  @media (min-width: 1024px) { 
+    width: 384px; 
+    flex-shrink: 0; 
+  }
+}
+
+.video-list-item-sidebar .mat-icon {
+  transition: color 0.2s ease-in-out;
 }

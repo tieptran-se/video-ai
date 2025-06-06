@@ -1,5 +1,5 @@
 import { CommonModule, JsonPipe } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { Video, TranscriptSegment, VideoTranscript, KeyMoment } from '../../models/models';
 import { MatCardModule } from '@angular/material/card';
@@ -143,9 +143,7 @@ export class TranscriptDisplay implements OnChanges, OnDestroy, AfterViewInit {
     }
     if (activeIndex === -1 && this.segments.length > 0) {
         if (currentTime < (this.segments[0].timestamp_start_seconds ?? 0)) {
-            // No active segment
         } else if (currentTime >= (this.segments[this.segments.length - 1].timestamp_end_seconds ?? Infinity)) {
-            // activeIndex = this.segments.length - 1; // Optionally highlight last
         }
     }
 
@@ -205,6 +203,11 @@ export class TranscriptDisplay implements OnChanges, OnDestroy, AfterViewInit {
     
     return currentTime >= momentStartTime && currentTime < momentEndTime;
   }
+
+  shouldShowVideoPlayer(): boolean {
+    return this.video?.status === 'completed' || this.video?.status === 'generating_mindmap' || this.video?.status === 'generating_quiz';
+  }
+
 
   ngOnDestroy(): void {
     this.removeVideoListener();

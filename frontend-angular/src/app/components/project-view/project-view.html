@@ -18,66 +18,83 @@
   </div>
 } @else if (project) {
   <!-- Main page header -->
-  <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-300">
-    <button mat-icon-button (click)="goBackToProjects()" aria-label="Back to projects list" class="text-gray-600 hover:text-brand-blue" matTooltip="Back to Projects">
-      <mat-icon>arrow_back_ios</mat-icon>
-    </button>
+  <div class="flex items-center justify-between mb-6 border-b border-gray-300">
     <h2 class="text-2xl lg:text-3xl font-semibold text-gray-800 flex items-center truncate px-2">
       <mat-icon class="mr-2 lg:mr-3 text-2xl lg:text-3xl text-brand-blue">folder_special</mat-icon>
       <span class="truncate" [title]="project.name">{{ project.name }}</span>
     </h2>
-    <span class="text-xs lg:text-sm text-gray-500 whitespace-nowrap">ID: {{ project.id }}</span>
+    <button mat-icon-button routerLink="/projects" aria-label="Back to projects list" class="text-gray-600 hover:text-brand-blue" matTooltip="Back to Projects">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Main Content Area -->
   <div class="space-y-8">
-    @if (currentVideoForTranscript) {
-      <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-        <!-- Toolbar for Video Actions -->
-        <div class="video-actions-toolbar bg-slate-100 p-3 border-b border-gray-200 flex flex-wrap justify-between items-center gap-2 sticky top-0 z-20">
-            <h3 class="text-lg font-semibold text-slate-700 truncate" [title]="currentVideoForTranscript.filename">
-              {{ currentVideoForTranscript.filename }}
-            </h3>
-            <div class="flex items-center gap-2 flex-wrap">
-              @if (currentVideoForTranscript.status === 'completed' && !isGeneratingMindmap && !isGeneratingQuiz) {
-                @if (!currentVideoForTranscript.mindmap_data) {
-                  <button mat-flat-button color="primary" (click)="triggerMindmapGeneration(currentVideoForTranscript.id)" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="Generate a mind map from the transcript">
-                    <mat-icon class="mr-1 !text-base">auto_awesome</mat-icon> Gen Mind Map
-                  </button>
-                } @else {
-                  <button mat-flat-button color="accent" (click)="openMindmapDialog()" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="View the generated mind map">
-                    <mat-icon class="mr-1 !text-base">account_tree</mat-icon> View Mind Map
-                  </button>
-                }
-                @if (!currentVideoForTranscript.quiz_data) {
-                  <button mat-flat-button color="primary" (click)="triggerQuizGeneration(currentVideoForTranscript.id)" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="Generate a quiz from the transcript">
-                    <mat-icon class="mr-1 !text-base">quiz</mat-icon> Generate Quiz
-                  </button>
-                } @else {
-                  <button mat-flat-button color="accent" (click)="openQuizDialog()" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="View the generated quiz">
-                    <mat-icon class="mr-1 !text-base">school</mat-icon> View Quiz
-                  </button>
-                }
-                 @if (!currentVideoForTranscript.is_public) {
-                  <button mat-stroked-button color="primary" (click)="publishVideo(currentVideoForTranscript)" class="h-9 rounded-md text-sm" matTooltip="Make this video publicly viewable">
-                    <mat-icon class="mr-1 !text-base">publish</mat-icon> Publish
-                  </button>
-                } @else {
-                  <button mat-stroked-button color="warn" (click)="unpublishVideo(currentVideoForTranscript)" class="h-9 rounded-md text-sm" matTooltip="Make this video private">
-                    <mat-icon class="mr-1 !text-base">visibility_off</mat-icon> Unpublish
-                  </button>
-                }
-              }
-              @if ((isGeneratingMindmap && currentVideoForTranscript.status === 'generating_mindmap') || (isGeneratingQuiz && currentVideoForTranscript.status === 'generating_quiz')) {
-                  <div class="flex items-center text-sm text-purple-600 p-2 bg-purple-50 rounded-md">
-                      <mat-spinner [diameter]="18" color="accent" class="mr-2"></mat-spinner>
-                      <span>
-                        @if(isGeneratingMindmap) { Generating Mind Map... }
-                        @if(isGeneratingQuiz) { Generating Quiz... }
-                      </span>
-                  </div>
-              }
-            </div>
+      <!-- Main Display Area: Video and Transcript -->
+      @if (currentVideoForTranscript) {
+        <div>
+          <!-- Toolbar for Video Actions -->
+          <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+              <h2 class="text-xl font-bold text-slate-700 truncate !m-0" [title]="currentVideoForTranscript.filename">
+                  {{ currentVideoForTranscript.filename }}
+              </h2>
+              <div class="flex items-center gap-2 flex-wrap">
+                  @if (currentVideoForTranscript.status === 'completed' && !isGeneratingMindmap && !isGeneratingQuiz) {
+                      @if (!currentVideoForTranscript.mindmap_data) {
+                      <button mat-flat-button color="primary" (click)="triggerMindmapGeneration()" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="Generate a mind map from the transcript">
+                        <span class="flex items-center">
+                            <mat-icon class="!text-base">auto_awesome</mat-icon>
+                            <span>Gen Mind Map</span>
+                        </span> 
+                      </button>
+                      } @else {
+                      <button mat-flat-button color="accent" (click)="openMindmapDialog()" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="View the generated mind map">
+                        <span class="flex items-center">
+                            <mat-icon class="!text-base">account_tree</mat-icon>
+                            <span>View Mind Map</span>
+                        </span>  
+                      </button>
+                      }
+                      @if (!currentVideoForTranscript.quiz_data) {
+                      <button mat-flat-button color="primary" (click)="triggerQuizGeneration()" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="Generate a quiz from the transcript">
+                        <span class="flex items-center">
+                            <mat-icon class="!text-base">quiz</mat-icon>
+                            <span>Generate Quiz</span>
+                        </span>   
+                      </button>
+                      } @else {
+                      <button mat-flat-button color="accent" (click)="openQuizDialog()" class="h-9 rounded-md shadow-sm hover:shadow-md transition-shadow text-sm" matTooltip="View the generated quiz">
+                        <span class="flex items-center">
+                            <mat-icon class="!text-base">school</mat-icon>
+                            <span>View Quiz</span>
+                        </span>     
+                      </button>
+                      }
+                      @if (!currentVideoForTranscript.is_public) {
+                      <button mat-stroked-button color="primary" (click)="publishVideo(currentVideoForTranscript)" class="h-9 rounded-md text-sm" matTooltip="Make this video publicly viewable">
+                        <span class="flex items-center">
+                            <mat-icon class="!text-base">publish</mat-icon>
+                            <span>Publish</span>
+                        </span>  
+                      </button>
+                      } @else {
+                      <button mat-stroked-button color="warn" (click)="unpublishVideo(currentVideoForTranscript)" class="h-9 rounded-md text-sm" matTooltip="Make this video private">
+                        <span class="flex items-center">
+                            <mat-icon class="!text-base">visibility_off</mat-icon>
+                            <span>Unpublish</span>
+                        </span>   
+                      </button>
+                      }
+                  }
+                  @if ((isGeneratingMindmap && currentVideoForTranscript.status === 'generating_mindmap') || (isGeneratingQuiz && currentVideoForTranscript.status === 'generating_quiz')) {
+                      <div class="flex items-center text-sm text-purple-600 p-2 bg-purple-50 rounded-md">
+                          <mat-spinner [diameter]="18" color="accent" class="mr-2"></mat-spinner>
+                          <span>
+                          @if(isGeneratingMindmap) { Generating Mind Map... }
+                          @if(isGeneratingQuiz) { Generating Quiz... }
+                          </span>
+                      </div>
+                  }
+              </div>
           </div>
           @if (currentVideoForTranscript.is_public && currentVideoForTranscript.public_slug) {
             <div class="p-3 bg-green-50 border-b border-green-200 text-sm text-green-700 flex items-center justify-between">
@@ -95,15 +112,19 @@
         <div class="no-videos-placeholder text-center text-gray-500 py-10 bg-white rounded-lg shadow-sm border border-dashed border-gray-300 h-full flex flex-col justify-center items-center min-h-[400px]">
             <mat-icon class="text-6xl opacity-40 mb-3">video_call</mat-icon>
             <p class="text-xl font-medium mb-2">No Videos in This Project Yet</p>
-            <p class="text-gray-600">Upload a video to get started.</p>
+            <p class="text-gray-600">Upload a video using the panel below to get started.</p>
         </div>
       }
+
       <!-- Video Library and Upload at the bottom -->
       <div class="bottom-panel-grid mt-8">
         <mat-card class="p-0">
-            <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+            <mat-card-header class="px-4 py-3 bg-slate-200 border-b border-slate-300">
             <mat-card-title class="text-lg font-medium text-slate-700 flex items-center">
-                <mat-icon class="mr-2">cloud_upload</mat-icon> Upload New Video
+                <span class="flex items-center">
+                    <mat-icon class="mr-2">cloud_upload</mat-icon>
+                    <span>Upload New Video</span>
+                </span>
             </mat-card-title>
             </mat-card-header>
             <mat-card-content class="p-4">
@@ -112,10 +133,13 @@
         </mat-card>
 
         @if (project.videos && project.videos.length > 0) {
-            <mat-card class="p-0">
-                <mat-card-header class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+            <mat-card class="p-0 mt-8">
+                <mat-card-header class="px-4 py-3 bg-slate-200 border-b border-slate-300">
                     <mat-card-title class="text-lg font-medium text-slate-700 flex items-center">
-                    <mat-icon class="mr-2">video_library</mat-icon> Project Video Library
+                        <span class="flex items-center">
+                            <mat-icon class="mr-2">video_library</mat-icon>
+                            <span>Project Video Library</span>
+                        </span>
                     </mat-card-title>
                 </mat-card-header>
                 <mat-card-content class="p-4"> 
@@ -123,7 +147,7 @@
                         @for (vid of project.videos; track vid.id) {
                         <div matRipple
                                 (click)="selectVideoForTranscript(vid)"
-                                class="video-item-card bg-white rounded-lg border border-gray-200 p-4 cursor-pointer transition-all duration-200 ease-in-out hover:shadow-xl hover:border-brand-blue-500/50 group flex flex-col justify-between"
+                                class="mb-4 video-item-card bg-white rounded-lg border border-gray-200 p-4 cursor-pointer transition-all duration-200 ease-in-out hover:shadow-xl hover:border-brand-blue-500/50 group flex flex-col justify-between"
                                 [ngClass]="{'ring-2 ring-brand-blue shadow-lg': currentVideoForTranscript?.id === vid.id}">
                             <div>
                             <div class="flex items-start justify-between mb-2">
@@ -138,18 +162,6 @@
                                         <mat-icon>label</mat-icon>
                                         <span>Edit Tags</span>
                                     </button>
-                                    @if (vid.status === 'completed' && !vid.is_public) {
-                                        <button mat-menu-item (click)="publishVideo(vid); $event.stopPropagation()">
-                                            <mat-icon>publish</mat-icon>
-                                            <span>Publish</span>
-                                        </button>
-                                    }
-                                    @if (vid.is_public) {
-                                        <button mat-menu-item (click)="unpublishVideo(vid); $event.stopPropagation()">
-                                            <mat-icon>visibility_off</mat-icon>
-                                            <span>Unpublish</span>
-                                        </button>
-                                    }
                                     <button mat-menu-item (click)="confirmDeleteVideo($event, vid)">
                                         <mat-icon color="warn">delete_outline</mat-icon>
                                         <span>Delete Video</span>
@@ -163,7 +175,7 @@
                                     'text-yellow-500': (vid.status === 'processing' || vid.status === 'uploaded'),
                                     'text-purple-500': vid.status === 'generating_mindmap' || vid.status === 'generating_quiz'
                                     }"
-                                    [class.animate-spin]="vid.status === 'processing' || vid.status === 'uploaded' || vid.status === 'generating_mindmap' || vid.status === 'generating_quiz'">
+                                    [class.animate-spin]="vid.status !== 'completed' && vid.status !== 'failed'">
                                     {{ vid.status === 'completed' ? 'check_circle'
                                     : (vid.status === 'failed' ? 'error'
                                     : (vid.status === 'generating_mindmap' ? 'psychology'
@@ -171,8 +183,7 @@
                                     : 'sync' ))) }}
                                 </mat-icon>
                                 <span class="capitalize">{{ vid.status?.replace('_', ' ') }}</span>
-                                <mat-divider vertical class="mx-2 h-4 self-center"></mat-divider>
-                                <span>{{ vid.uploaded_at | date:'short' }}</span>
+                                <span class="ml-4">{{ vid.uploaded_at | date:'short' }}</span>
                             </div>
 
                             @if (editingTagsVideoId === vid.id) {
