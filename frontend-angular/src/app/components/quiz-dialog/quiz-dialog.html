@@ -3,14 +3,22 @@
     <h2 mat-dialog-title class="text-xl font-semibold mb-0 truncate" [title]="data.quiz.title + ' for ' + data.videoName">
       {{ data.quiz.title }}
     </h2>
-    <button mat-icon-button (click)="closeDialog()" aria-label="Close dialog">
-      <mat-icon>close</mat-icon>
-    </button>
+    <div class="flex items-center gap-4">
+      @if (!showResults) {
+        <div class="flex items-center px-3 py-1 rounded-full bg-red-100 text-red-700 font-medium">
+            <mat-icon class="text-base mr-1">timer</mat-icon>
+            <span class="text-sm">{{ timerDisplay }}</span>
+        </div>
+      }
+      <button mat-icon-button (click)="closeDialog()" aria-label="Close dialog">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
   </header>
 
   <mat-dialog-content class="flex-grow p-6 quiz-content">
     @if (!showResults) {
-      <form #quizForm="ngForm" (ngSubmit)="submitQuiz()">
+      <form #quizForm="ngForm">
         @for (question of data.quiz.questions; track $index; let qIndex = $index) {
           <div class="mb-6 p-4 border rounded-lg shadow-sm bg-white">
             <p class="font-medium text-gray-700 mb-3">{{ qIndex + 1 }}. {{ question.question_text }}</p>
@@ -38,7 +46,6 @@
             }
           </div>
         }
-        <button mat-raised-button color="primary" type="submit" class="w-full h-11 rounded-md">Submit Quiz</button>
       </form>
     } @else {
       <div class="results-summary p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6">
@@ -58,10 +65,9 @@
               @for (option of question.options; track $index) {
                 <li [ngClass]="getOptionClasses(option, question, qIndex)">
                   {{ option.text }} 
-                  <!-- Use the new method for icon display -->
-                  @if (getOptionResultIconDetails(option, question, qIndex); as iconDetails) {
-                    @if (iconDetails) {
-                      <mat-icon class="text-sm align-middle ml-1 {{iconDetails.iconClass}}">{{ iconDetails.iconName }}</mat-icon>
+                  @if(getOptionResultIconDetails(option, question, qIndex); as iconDetails) {
+                    @if(iconDetails) {
+                      <mat-icon class="text-sm align-middle ml-1 {{iconDetails.iconClass}}">{{iconDetails.iconName}}</mat-icon>
                     }
                   }
                 </li>
@@ -78,10 +84,11 @@
     }
   </mat-dialog-content>
 
-  <mat-dialog-actions align="end" class="p-4 border-t">
+  <mat-dialog-actions align="end" class="p-4 border-t sticky bottom-0 bg-white z-10">
     @if (showResults) {
-      <button mat-stroked-button (click)="showResults = false; userAnswers = {}; score = 0;">Retake Quiz</button>
+      <button mat-stroked-button (click)="showResults = false; userAnswers = {}; score = 0; startTimer()">Retake Quiz</button>
+    } @else {
+      <button mat-raised-button color="primary" (click)="submitQuiz()" class="w-full h-11 rounded-md">Submit Quiz</button>
     }
-    <button mat-flat-button color="primary" (click)="closeDialog()">Close</button>
   </mat-dialog-actions>
 </div>

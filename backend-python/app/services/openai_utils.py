@@ -2,11 +2,17 @@ import os
 import json
 import asyncio
 from openai import OpenAI
-from typing import List as PyList, Any, Dict
+from typing import List as PyList, Any, Dict 
 from .utils import format_timestamp 
+from .prompt_manager import ( # Import prompts from prompt_manager
+    get_key_moments_extraction_prompt,
+    get_mindmap_generation_prompt,
+    get_quiz_generation_prompt,
+    get_tag_generation_prompt
+)
 
 try:
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=60.0) 
     if not os.getenv("OPENAI_API_KEY"):
         print("Warning: OPENAI_API_KEY environment variable not set. OpenAI calls will fail.")
 except Exception as e:
@@ -17,7 +23,7 @@ async def extract_key_moments(full_transcript_text: str, whisper_segments_object
     key_moments_final: PyList[Dict[str, str]] = []
     if not client: return [] 
     if not full_transcript_text.strip(): return []
-
+    print("[OpenAI_Utils] Starting key moment extraction...")
     try:
         estimated_duration_minutes = 0
         if whisper_segments_objects and hasattr(whisper_segments_objects[-1], 'end'):
@@ -27,16 +33,7 @@ async def extract_key_moments(full_transcript_text: str, whisper_segments_object
         if estimated_duration_minutes > 20: num_chapters_suggestion = "7-10"
         elif estimated_duration_minutes < 5: num_chapters_suggestion = "3-5"
 
-        extraction_prompt = f"""
-        Analyze the following transcript and identify {num_chapters_suggestion} significant and distinct key moments or chapters that are well-distributed throughout the content.
-        For each key moment:
-        1. Provide a concise descriptive 'label' (5-10 words) that summarizes the section.
-        2. Provide the 'starting_phrase' which is the first few words (approx. 10-20 words) of the sentence where this new section or topic begins in the transcript. 
-           Ensure each 'starting_phrase' is unique and clearly marks the beginning of a different part of the discussion.
-        Return the result *only* as a JSON object with a single key "key_moments", containing a list of objects, each with "label" and "starting_phrase".
-        Ensure chronological order. Example: {{"key_moments": [{{"label": "Intro", "starting_phrase": "Welcome..."}}]}}
-        If no distinct key moments are found, return {{"key_moments": []}}.
-        Transcript: {full_transcript_text}"""
+        extraction_prompt = get_key_moments_extraction_prompt(full_transcript_text, num_chapters_suggestion)
 
         chat_model_to_use = "gpt-3.5-turbo-0125" 
         response = await asyncio.to_thread(
@@ -53,8 +50,10 @@ async def extract_key_moments(full_transcript_text: str, whisper_segments_object
                 data = json.loads(raw_response_content)
                 if isinstance(data, dict) and "key_moments" in data and isinstance(data["key_moments"], list):
                     extracted_moments_data = data["key_moments"]
-            except Exception as e: print(f"Error processing key moments response: {e}")
-        if not extracted_moments_data: return []
+            except Exception as e: print(f"[OpenAI_Utils] Error processing key moments response: {e}")
+        if not extracted_moments_data: 
+            print("[OpenAI_Utils] No key moments extracted by LLM or parsing failed.")
+            return []
 
         last_found_timestamp_seconds = -1.0 
         for moment_info in extracted_moments_data:
@@ -77,16 +76,18 @@ async def extract_key_moments(full_transcript_text: str, whisper_segments_object
         for moment in key_moments_final:
             if moment['timestamp_start'] not in seen_timestamps:
                 final_unique_moments.append(moment); seen_timestamps.add(moment['timestamp_start'])
+        print(f"[OpenAI_Utils] Key moment extraction successful. Found {len(final_unique_moments)} moments.")
         return final_unique_moments
-    except Exception as e: print(f"Error in extract_key_moments: {str(e)}"); return []
+    except Exception as e: print(f"[OpenAI_Utils] Error in extract_key_moments: {str(e)}"); return []
 
 async def generate_mindmap_data_from_transcript(full_transcript_text: str, key_moments: PyList[Dict[str,str]]) -> str:
     if not client: return "# Mind Map Error\n- Client not initialized."
     if not full_transcript_text.strip(): return "# Mind Map Error\n- Empty transcript."
+    print("[OpenAI_Utils] Starting mind map generation...")
     key_moments_summary = "\nKey moments:\n" + "\n".join([f"- {km['label']} ({km['timestamp_start']})" for km in key_moments]) if key_moments else ""
-    mindmap_prompt = f"""Generate a hierarchical Markdown mind map from the transcript and key moments.
-    Use # for main branches, nested lists for sub-topics. Aim for 2-4 levels.
-    {key_moments_summary}\nTranscript: {full_transcript_text[:15000]}"""
+    
+    mindmap_prompt = get_mindmap_generation_prompt(full_transcript_text, key_moments_summary)
+    
     try:
         response = await asyncio.to_thread(
             client.chat.completions.create, model="gpt-3.5-turbo",
@@ -94,74 +95,80 @@ async def generate_mindmap_data_from_transcript(full_transcript_text: str, key_m
                 {"role": "system", "content": "You generate Markdown mind maps from transcripts."},
                 {"role": "user", "content": mindmap_prompt}],
             temperature=0.5)
+        print("[OpenAI_Utils] Mind map Markdown generated by LLM.")
         return response.choices[0].message.content or "# Mind Map\n- No content."
-    except Exception as e: return f"# Mind Map Error\n- {str(e)}"
+    except Exception as e: print(f"[OpenAI_Utils] Error in generate_mindmap: {str(e)}"); return f"# Mind Map Error\n- {str(e)}"
 
 async def generate_quiz_data_from_transcript(full_transcript_text: str, video_title: str) -> Dict[str, Any]:
     if not client: return {"title": f"Quiz for {video_title}", "questions": [{"question_text": "Quiz generation failed: OpenAI client not initialized.", "question_type": "single-choice", "options": [], "explanation": ""}]}
     if not full_transcript_text.strip(): return {"title": f"Quiz for {video_title}", "questions": [{"question_text": "Quiz generation failed: Transcript empty.", "question_type": "single-choice", "options": [], "explanation": ""}]}
-
-    quiz_prompt = f"""
-    Based on the following video transcript, generate a quiz with 15-20 questions to test understanding of the content.
-    Include a mix of single-choice and multiple-choice questions.
-    For each question, provide:
-    - "question_text": The question itself.
-    - "question_type": Either "single-choice" or "multiple-choice".
-    - "options": A list of option objects, each with "text" and "is_correct" (boolean). For single-choice, only one option should be correct.
-    - "explanation": (Optional) A brief explanation for the correct answer.
-
-    Return the result *only* as a JSON object with a "title" (e.g., "Quiz for: [Video Title]") and a "questions" key, where "questions" is a list of question objects as described above.
-    Example of the "questions" list structure:
-    [
-      {{
-        "question_text": "What is the main topic of the first section?",
-        "question_type": "single-choice",
-        "options": [
-          {{"text": "Option A", "is_correct": false}},
-          {{"text": "Option B (Correct)", "is_correct": true}},
-          {{"text": "Option C", "is_correct": false}}
-        ],
-        "explanation": "Option B is correct because..."
-      }},
-      {{
-        "question_text": "Which of the following concepts were discussed? (Select all that apply)",
-        "question_type": "multiple-choice",
-        "options": [
-          {{"text": "Concept X (Correct)", "is_correct": true}},
-          {{"text": "Concept Y", "is_correct": false}},
-          {{"text": "Concept Z (Correct)", "is_correct": true}}
-        ],
-        "explanation": "Concepts X and Z were mentioned..."
-      }}
-    ]
-    If the transcript is too short or unsuitable for generating 15-20 questions, generate as many good questions as possible.
-
-    Video Title: {video_title}
-    Transcript:
-    {full_transcript_text[:15000]} 
-    """
-    print("Requesting quiz generation from OpenAI chat model...")
+    print("[OpenAI_Utils] Starting quiz generation...")
+    
+    quiz_prompt = get_quiz_generation_prompt(full_transcript_text, video_title)
+    
     try:
-        chat_model_to_use = "gpt-3.5-turbo-0125" # Good for JSON
+        chat_model_to_use = "gpt-3.5-turbo-0125" 
+        response = await asyncio.to_thread(
+            client.chat.completions.create, model=chat_model_to_use,
+            messages=[
+                {"role": "system", "content": "You are an assistant that generates quizzes in a specific JSON format from video transcripts."},
+                {"role": "user", "content": quiz_prompt}],
+            temperature=0.4, response_format={"type": "json_object"})
+        quiz_json_str = response.choices[0].message.content
+        print("[OpenAI_Utils] Quiz JSON generated by LLM.")
+        if quiz_json_str:
+            parsed_quiz = json.loads(quiz_json_str)
+            if "title" in parsed_quiz and "questions" in parsed_quiz: return parsed_quiz
+        return {"title": f"Quiz for {video_title}", "questions": [{"question_text": "Failed to parse quiz data from LLM.", "question_type": "single-choice", "options": [], "explanation": ""}]}
+    except Exception as e:
+        print(f"[OpenAI_Utils] Error in generate_quiz: {str(e)}")
+        return {"title": f"Quiz for {video_title}", "questions": [{"question_text": f"Quiz generation error: {str(e)}", "question_type": "single-choice", "options": [], "explanation": ""}]}
+
+async def generate_tags_from_transcript(full_transcript_text: str) -> PyList[str]:
+    if not client:
+        print("[OpenAI_Utils] OpenAI client not initialized. Cannot generate tags.")
+        return []
+    if not full_transcript_text.strip():
+        print("[OpenAI_Utils] Transcript text is empty. Cannot generate tags.")
+        return []
+
+    tagging_prompt = get_tag_generation_prompt(full_transcript_text)
+
+    print("[OpenAI_Utils] Requesting tag generation from OpenAI chat model...")
+    try:
+        chat_model_to_use = "gpt-3.5-turbo-0125" 
         response = await asyncio.to_thread(
             client.chat.completions.create,
             model=chat_model_to_use,
             messages=[
-                {"role": "system", "content": "You are an assistant that generates quizzes in a specific JSON format from video transcripts."},
-                {"role": "user", "content": quiz_prompt}
+                {"role": "system", "content": "You are an assistant that suggests relevant tags (categories, keywords) for a video transcript. You return a JSON object with a 'tags' key, which is a list of strings."},
+                {"role": "user", "content": tagging_prompt}
             ],
-            temperature=0.4,
+            temperature=0.3, 
             response_format={"type": "json_object"}
         )
-        quiz_json_str = response.choices[0].message.content
-        print("Quiz JSON generated.")
-        # Validate and return the parsed JSON, or a default error structure
-        if quiz_json_str:
-            parsed_quiz = json.loads(quiz_json_str)
-            if "title" in parsed_quiz and "questions" in parsed_quiz:
-                return parsed_quiz
-        return {"title": f"Quiz for {video_title}", "questions": [{"question_text": "Failed to parse quiz data from LLM.", "question_type": "single-choice", "options": [], "explanation": ""}]}
+        tags_json_str = response.choices[0].message.content
+        print(f"[OpenAI_Utils] Raw tags JSON object string: {tags_json_str}")
+        
+        extracted_tags_list = []
+        if tags_json_str:
+            try:
+                data = json.loads(tags_json_str)
+                if isinstance(data, dict) and "tags" in data and isinstance(data["tags"], list):
+                    extracted_tags_list = [str(tag).strip() for tag in data["tags"] if isinstance(tag, str) and tag.strip()] 
+                    extracted_tags_list = list(dict.fromkeys(extracted_tags_list))
+            except json.JSONDecodeError as json_e:
+                print(f"[OpenAI_Utils] Error decoding JSON from tags response: {json_e}")
+            except Exception as e:
+                print(f"[OpenAI_Utils] An unexpected error occurred while processing tags response: {e}")
+        
+        if not extracted_tags_list:
+            print("[OpenAI_Utils] No tags were extracted or the response was not in the expected format.")
+            return []
+        
+        print(f"[OpenAI_Utils] Tag generation successful. Found {len(extracted_tags_list)} tags: {extracted_tags_list}")
+        return extracted_tags_list
 
     except Exception as e:
-        print(f"Error during quiz generation with OpenAI: {str(e)}")
-        return {"title": f"Quiz for {video_title}", "questions": [{"question_text": f"Quiz generation error: {str(e)}", "question_type": "single-choice", "options": [], "explanation": ""}]}
+        print(f"[OpenAI_Utils] Error during tag generation with OpenAI: {str(e)}")
+        return []

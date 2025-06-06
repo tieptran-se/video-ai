@@ -7,6 +7,7 @@ from .database import engine
 from .models import Base 
 from .api import projects as projects_api 
 from .api import videos as videos_api     
+from .api import public as public_api 
 
 app = FastAPI(title="Video Processor API")
 
@@ -30,6 +31,7 @@ app.mount("/static_videos", StaticFiles(directory=UPLOAD_DIR), name="static_vide
 
 app.include_router(projects_api.router)
 app.include_router(videos_api.router)
+app.include_router(public_api.router) 
 
 @app.get("/")
 async def root():

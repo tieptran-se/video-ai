@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list'; 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-transcript-display',
@@ -14,10 +15,11 @@ import { MatTabsModule } from '@angular/material/tabs';
     CommonModule,
     JsonPipe,
     MatIconModule,
-    MatCardModule, // Keep if you might wrap content in cards later
+    MatCardModule, 
     MatTabsModule,
     MatListModule,
-    MatDividerModule
+    MatDividerModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './transcript-display.html',
   styleUrls: ['./transcript-display.scss']

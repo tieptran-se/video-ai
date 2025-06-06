@@ -1,109 +1,107 @@
-<!-- This component now focuses on the video player and the tabbed transcript/key moments -->
 @if (video) {
-  <div class="video-analysis-container bg-white rounded-lg shadow-md overflow-hidden">
-    @if (video.status === 'completed' && getVideoSource()) {
-      <div class="video-player-wrapper p-4 border-b border-gray-200">
-        <video #videoPlayer 
-               width="100%" 
-               style="max-width: 100%; margin: auto; display: block;" 
-               height="auto" 
-               controls 
-               [src]="getVideoSource()" 
-               type="video/mp4" 
-               class="aspect-video rounded-md bg-black">
-          Your browser does not support the video tag.
-        </video>
-      </div>
-    } @else if (video.status === 'completed' && !getVideoSource()) {
-      <div class="text-gray-500 p-6 border-b border-gray-200 text-center bg-gray-50">
-        <mat-icon class="text-5xl opacity-60 mb-2">videocam_off</mat-icon>
-        <p class="font-medium">Video file not available.</p>
-      </div>
-    } @else if (video.status !== 'completed') {
-      <div class="text-gray-500 p-6 border-b border-gray-200 text-center bg-gray-50 min-h-[200px] flex flex-col justify-center items-center">
-        <mat-icon class="text-5xl opacity-60 mb-2">hourglass_empty</mat-icon>
-        <p class="font-medium">Video is not yet processed or selected.</p>
-      </div>
-    }
-
-    @if (video.status === 'completed' && parsedTranscriptData && ( (parsedTranscriptData.segments?.length ?? 0) > 0 || (parsedTranscriptData.key_moments?.length ?? 0) > 0 )) {
-      <mat-tab-group animationDuration="0ms" mat-stretch-tabs="false" mat-align-tabs="start" class="transcript-tabs">
-        @if (segments.length > 0) {
-          <mat-tab>
-              <ng-template mat-tab-label>
-                  <mat-icon class="mr-2">list_alt</mat-icon> Full Transcript
-              </ng-template>
-            <ng-template matTabContent>
-                <ul #segmentsList class="transcript-list max-h-[calc(100vh-350px)] md:max-h-[calc(100vh-450px)] overflow-y-auto p-4 space-y-1"> <!-- Adjusted max-height -->
-                  @for (segment of segments; track $index; let i = $index) {
-                    <li (click)="seekVideo(segment.timestamp_start)"
-                        [id]="'segment-' + i"
-                        class="segment-item p-3 rounded-md cursor-pointer transition-all duration-150 ease-in-out flex items-start group"
-                        [class.bg-blue-100]="i === currentSegmentIndex"
-                        [class.text-brand-blue]="i === currentSegmentIndex"
-                        [class.font-semibold]="i === currentSegmentIndex"
-                        [class.hover:bg-blue-50]="i !== currentSegmentIndex">
-                      <span class="text-xs font-mono text-gray-400 mr-3 pt-1 whitespace-nowrap group-hover:text-gray-600" [class.!text-brand-blue]="i === currentSegmentIndex">
-                        [{{ segment.timestamp_start }}]
-                      </span>
-                      <span class="text-gray-700 leading-relaxed group-hover:text-gray-900 flex-1" [class.!text-brand-blue]="i === currentSegmentIndex" [class.font-bold]="i === currentSegmentIndex">
-                        {{ segment.text }}
-                      </span>
-                    </li>
-                  }
-                </ul>
-            </ng-template>
-          </mat-tab>
+  <div class="transcript-display-grid">
+    <!-- Left Column: Video Player or Status -->
+    <div class="video-player-container rounded-lg overflow-hidden bg-black flex justify-center items-center">
+      @if (video.status === 'completed' || video.status === 'generating_mindmap' || video.status === 'generating_quiz') {
+        @if (getVideoSource(); as videoUrl) {
+          <video #videoPlayer 
+                width="100%" height="auto" controls 
+                [src]="videoUrl" 
+                type="video/mp4" 
+                class="w-full h-full">
+            Your browser does not support the video tag.
+          </video>
+        } @else {
+          <div class="placeholder-wrapper aspect-video flex flex-col justify-center items-center text-gray-400 bg-gray-900">
+            <mat-icon class="text-6xl">videocam_off</mat-icon>
+            <p class="mt-2">Video file not found.</p>
+          </div>
         }
+      } @else {
+        <!-- For processing or other states, show a spinner -->
+        <div class="placeholder-wrapper aspect-video flex flex-col justify-center items-center text-gray-400 bg-gray-900">
+          <mat-spinner [diameter]="50" color="primary"></mat-spinner>
+          <p class="mt-4 text-lg">Processing Video...</p>
+        </div>
+      }
+    </div>
 
-        @if (keyMoments.length > 0) {
-          <mat-tab>
-              <ng-template mat-tab-label>
-                  <mat-icon class="mr-2">label_important</mat-icon> Key Moments
-              </ng-template>
-            <ng-template matTabContent>
-                <mat-list class="p-2 max-h-[calc(100vh-350px)] md:max-h-[calc(100vh-450px)] overflow-y-auto"> <!-- Adjusted max-height -->
-                  @for (keyMoment of keyMoments; track $index; let i = $index) {
-                    <mat-list-item (click)="seekVideo(keyMoment.timestamp_start)"
-                                   class="key-moment-item hover:bg-blue-50 rounded-md cursor-pointer my-1 h-auto py-2.5"
-                                   [class.bg-blue-100]="videoPlayer?.nativeElement && isKeyMomentActive(keyMoment)"
-                                   [class.text-brand-blue]="videoPlayer?.nativeElement && isKeyMomentActive(keyMoment)"
-                                   [class.font-semibold]="videoPlayer?.nativeElement && isKeyMomentActive(keyMoment)">
-                      <mat-icon matListItemIcon [ngClass]="{'text-brand-blue': videoPlayer?.nativeElement && isKeyMomentActive(keyMoment) }">bookmark_border</mat-icon>
-                      <div matListItemTitle class="text-gray-700 group-hover:text-gray-900 text-sm">{{ keyMoment.label }}</div>
-                      <div matListItemLine class="text-xs font-mono text-gray-500 group-hover:text-gray-700">[{{ keyMoment.timestamp_start }}]</div>
-                    </mat-list-item>
-                    @if (i < keyMoments.length - 1) {
-                      <mat-divider></mat-divider>
+    <!-- Right Column: Transcript and Analysis -->
+    <div class="analysis-container bg-white rounded-lg shadow-inner overflow-hidden">
+      @if (video.status === 'completed' || video.status === 'generating_mindmap' || video.status === 'generating_quiz') {
+        @if (parsedTranscriptData && ((parsedTranscriptData.segments?.length ?? 0) > 0 || (parsedTranscriptData.key_moments?.length ?? 0) > 0)) {
+          <mat-tab-group animationDuration="0ms" mat-stretch-tabs="false" mat-align-tabs="start" class="h-full flex flex-col">
+            @if (segments.length > 0) {
+              <mat-tab>
+                <ng-template mat-tab-label><mat-icon class="mr-2">list_alt</mat-icon> Full Transcript</ng-template>
+                <ng-template matTabContent>
+                  <ul #segmentsList class="transcript-list h-full overflow-y-auto p-4 space-y-1">
+                    @for (segment of segments; track $index; let i = $index) {
+                      <li (click)="seekVideo(segment.timestamp_start)"
+                          [id]="'segment-' + i"
+                          class="segment-item p-3 rounded-md cursor-pointer transition-all duration-150 ease-in-out flex items-start group"
+                          [class.bg-blue-100]="i === currentSegmentIndex"
+                          [class.text-brand-blue]="i === currentSegmentIndex"
+                          [class.font-semibold]="i === currentSegmentIndex"
+                          [class.hover:bg-blue-50]="i !== currentSegmentIndex">
+                        <span class="text-xs font-mono text-gray-400 mr-3 pt-1 whitespace-nowrap group-hover:text-gray-600" [class.!text-brand-blue]="i === currentSegmentIndex">
+                          [{{ segment.timestamp_start }}]
+                        </span>
+                        <span class="text-gray-700 leading-relaxed group-hover:text-gray-900 flex-1" [class.!text-brand-blue]="i === currentSegmentIndex" [class.font-bold]="i === currentSegmentIndex">
+                          {{ segment.text }}
+                        </span>
+                      </li>
                     }
-                  }
-                </mat-list>
-            </ng-template>
-          </mat-tab>
+                  </ul>
+                </ng-template>
+              </mat-tab>
+            }
+            @if (keyMoments.length > 0) {
+              <mat-tab>
+                <ng-template mat-tab-label><mat-icon class="mr-2">label_important</mat-icon> Key Moments</ng-template>
+                <ng-template matTabContent>
+                  <mat-list class="p-2 h-full overflow-y-auto">
+                    @for (keyMoment of keyMoments; track $index; let i = $index) {
+                      <mat-list-item (click)="seekVideo(keyMoment.timestamp_start)"
+                                     class="key-moment-item hover:bg-blue-50 rounded-md cursor-pointer my-1 h-auto py-2.5"
+                                     [class.bg-blue-100]="videoPlayer?.nativeElement && isKeyMomentActive(keyMoment)"
+                                     [class.text-brand-blue]="videoPlayer?.nativeElement && isKeyMomentActive(keyMoment)"
+                                     [class.font-semibold]="videoPlayer?.nativeElement && isKeyMomentActive(keyMoment)">
+                        <mat-icon matListItemIcon [ngClass]="{'text-brand-blue': videoPlayer?.nativeElement && isKeyMomentActive(keyMoment) }">bookmark_border</mat-icon>
+                        <div matListItemTitle class="text-gray-700 group-hover:text-gray-900 text-sm">{{ keyMoment.label }}</div>
+                        <div matListItemLine class="text-xs font-mono text-gray-500 group-hover:text-gray-700">[{{ keyMoment.timestamp_start }}]</div>
+                      </mat-list-item>
+                      @if (i < keyMoments.length - 1) { <mat-divider></mat-divider> }
+                    }
+                  </mat-list>
+                </ng-template>
+              </mat-tab>
+            }
+          </mat-tab-group>
+        } @else {
+          <div class="text-gray-500 p-8 text-center flex flex-col justify-center h-full">
+            <mat-icon class="text-6xl opacity-50 mb-3">speaker_notes_off</mat-icon>
+            <p class="text-xl font-medium mb-1">No Analysis Data</p>
+            <p class="text-sm">The transcript has no content or key moments.</p>
+          </div>
         }
-      </mat-tab-group>
-    } @else if (video.status === 'completed') { 
-       <div class="text-gray-500 p-8 text-center">
-        <mat-icon class="text-6xl opacity-50 mb-3">speaker_notes_off</mat-icon>
-        <p class="text-xl font-medium mb-1">No Analysis Data</p>
-        <p class="text-sm">The video was processed, but no transcript or key moments data was found.</p>
-      </div>
-    }
-
-    @if (video.status === 'failed') {
-      <mat-card class="border-l-4 border-red-500 bg-red-50 shadow-lg m-4">
-        <mat-card-header class="!pt-3 !pb-2">
-           <mat-icon mat-card-avatar color="warn" class="!text-3xl !w-auto !h-auto mr-0">error</mat-icon>
-           <mat-card-title class="!text-red-700 !text-lg !font-semibold">Processing Failed</mat-card-title>
-           <mat-card-subtitle class="!text-red-600">Could not generate transcript for '{{video.filename}}'.</mat-card-subtitle>
-        </mat-card-header>
-        @if (video.transcript && typeof video.transcript === 'string') {
-          <mat-card-content class="pt-2">
-            <p class="text-sm text-gray-700 mb-1">Error details:</p>
-            <pre class="text-xs bg-gray-100 p-3 rounded overflow-x-auto border border-gray-200 text-gray-600">{{ video.transcript }}</pre>
-          </mat-card-content>
-        }
-      </mat-card>
-    }
+      } @else if (video.status === 'failed') {
+          <div class="p-4">
+            <mat-card class="border-l-4 border-red-500 bg-red-50 shadow-lg">
+                <mat-card-header class="!pt-3 !pb-2">
+                  <mat-icon mat-card-avatar color="warn" class="!text-3xl !w-auto !h-auto mr-0">error</mat-icon>
+                  <mat-card-title class="!text-red-700 !text-lg !font-semibold">Processing Failed</mat-card-title>
+                  <mat-card-subtitle class="!text-red-600">Could not generate transcript for '{{video.filename}}'.</mat-card-subtitle>
+                </mat-card-header>
+                @if (video.transcript && typeof video.transcript === 'string') {
+                  <mat-card-content class="pt-2">
+                      <p class="text-sm text-gray-700 mb-1">Error details:</p>
+                      <pre class="text-xs bg-gray-100 p-3 rounded overflow-x-auto border border-gray-200 text-gray-600">{{ video.transcript }}</pre>
+                  </mat-card-content>
+                }
+            </mat-card>
+          </div>
+      }
+    </div>
   </div>
 }

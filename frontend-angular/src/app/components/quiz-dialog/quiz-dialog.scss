@@ -5,6 +5,7 @@
 }
 
 .quiz-content {
+  // Custom scrollbar styling for better aesthetics if needed
   &::-webkit-scrollbar {
     width: 8px;
   }

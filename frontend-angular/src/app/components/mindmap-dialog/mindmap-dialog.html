@@ -1,6 +1,8 @@
 <div class="flex flex-col h-full">
   <header class="flex items-center justify-between p-4 border-b">
-    <h2 mat-dialog-title class="text-xl font-semibold mb-0">Mind Map: {{ data.videoName }}</h2>
+    <h2 mat-dialog-title class="text-xl font-semibold mb-0 truncate" [title]="data.videoName">
+      Mind Map: {{ data.videoName }}
+    </h2>
     <button mat-icon-button (click)="closeDialog()" aria-label="Close dialog">
       <mat-icon>close</mat-icon>
     </button>
@@ -21,8 +23,4 @@
       </div>
     }
   </mat-dialog-content>
-
-  <mat-dialog-actions align="end" class="p-4 border-t">
-    <button mat-stroked-button (click)="closeDialog()">Close</button>
-  </mat-dialog-actions>
 </div>

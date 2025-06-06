@@ -1,0 +1,13 @@
+:host {
+    display: block;
+    background-color: #eef2f7; // A slightly different background for public page
+    min-height: 100vh;
+}
+
+.public-video-page {
+    // General page styling if needed beyond container
+}
+
+.video-actions-toolbar {
+    // ensure it's not sticky for the public view unless desired
+}

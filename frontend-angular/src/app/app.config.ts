@@ -10,8 +10,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDialogModule } from '@angular/material/dialog'; 
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatRadioModule } from '@angular/material/radio'; // For Quiz Dialog
-import { MatCheckboxModule } from '@angular/material/checkbox'; // For Quiz Dialog
+import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox'; 
+import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu'; 
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -29,7 +31,9 @@ export const appConfig: ApplicationConfig = {
       MatTabsModule,
       MatDialogModule,
       MatRadioModule,
-      MatCheckboxModule
+      MatCheckboxModule,
+      MatChipsModule, 
+      MatMenuModule
     ),
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000, verticalPosition: 'top' } }
   ]

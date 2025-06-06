@@ -79,21 +79,19 @@ async def upload_video_for_project_endpoint(
 
 @router.delete("/{project_id}/videos/{video_id}", status_code=http_status.HTTP_204_NO_CONTENT)
 def delete_video_from_project_endpoint(
-    project_id: int, # Keep project_id for path consistency, though not strictly needed if video_id is globally unique
+    project_id: int, 
     video_id: int,
     db: Session = Depends(database.get_db)
 ):
     db_video = crud.get_video(db, video_id=video_id)
     if not db_video:
         raise HTTPException(status_code=404, detail="Video not found")
-    if db_video.project_id != project_id: # Ensure video belongs to the project
+    if db_video.project_id != project_id: 
         raise HTTPException(status_code=403, detail="Video does not belong to this project")
     
     deleted_video = crud.delete_video(db, video_id=video_id)
-    if not deleted_video: # Should not happen if previous check passed, but good for safety
+    if not deleted_video: 
         raise HTTPException(status_code=404, detail="Video not found during deletion attempt")
     
-    # If you delete the file from filesystem in crud.delete_video, no further action here.
-    # Otherwise, you might trigger a background task for file cleanup if needed.
     print(f"Video ID {video_id} deleted from project ID {project_id}")
     return Response(status_code=http_status.HTTP_204_NO_CONTENT)

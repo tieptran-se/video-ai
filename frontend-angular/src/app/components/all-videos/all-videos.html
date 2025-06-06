@@ -1,0 +1,82 @@
+<div class="mb-8 pb-4 border-b border-gray-300">
+  <h2 class="text-3xl font-semibold text-gray-700">All Uploaded Videos</h2>
+  <p class="text-gray-500">Browse and manage all videos across your projects.</p>
+</div>
+
+@if (isLoading) {
+  <div class="text-center py-12">
+    <mat-progress-bar mode="indeterminate" class="mb-4 max-w-md mx-auto"></mat-progress-bar>
+    <p class="text-gray-600">Loading all videos, please wait...</p>
+  </div>
+} @else if (errorMessage) {
+  <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-6 rounded-md shadow-md mb-6" role="alert">
+    <div class="flex items-center">
+      <mat-icon color="warn" class="mr-3">error_outline</mat-icon>
+      <div>
+        <strong class="font-bold block">An Error Occurred</strong>
+        <span class="block sm:inline">{{ errorMessage }}</span>
+      </div>
+    </div>
+    <button mat-stroked-button color="warn" (click)="loadAllVideos()" class="mt-4">
+      <mat-icon>refresh</mat-icon> Try Again
+    </button>
+  </div>
+} @else if (allVideos.length === 0) {
+  <div class="text-center text-gray-500 py-16 bg-white rounded-lg shadow-md">
+    <mat-icon class="text-7xl opacity-40 mb-4">no_photography</mat-icon>
+    <p class="text-2xl font-medium mb-2">No Videos Found</p>
+    <p class="text-gray-600">It looks like no videos have been uploaded to any project yet.</p>
+     <button mat-flat-button color="primary" routerLink="/projects/new" class="mt-6 h-12 px-6 rounded-md">
+      <mat-icon class="mr-2">add</mat-icon> Create a Project & Upload
+    </button>
+  </div>
+} @else {
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    @for (video of allVideos; track video.id) {
+      <mat-card class="video-card flex flex-col group" (click)="viewVideoInProject(video)" matRipple>
+        <div class="p-4 flex-grow">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-lg font-semibold text-gray-800 group-hover:text-brand-blue transition-colors truncate" [title]="video.filename">
+              {{ video.filename }}
+            </h3>
+             @if (video.is_public && video.public_slug) {
+                <button mat-icon-button color="accent" [matTooltip]="'Video is public. Click to copy shareable link.'" 
+                        (click)="copyToClipboard(getShareableLink(video.public_slug), $event)">
+                    <mat-icon>public</mat-icon>
+                </button>
+            }
+          </div>
+          <p class="text-xs text-gray-500 mb-1">
+            In Project: <a [routerLink]="['/projects', video.project_id]" (click)="$event.stopPropagation()" class="text-brand-blue hover:underline">{{ video['project_name'] || 'Unknown' }}</a>
+          </p>
+          <p class="text-xs text-gray-500 mb-2">Uploaded: {{ video.uploaded_at | date:'short' }}</p>
+          
+          <div class="mb-2">
+             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [ngClass]="{
+                'bg-green-100 text-green-800': video.status === 'completed',
+                'bg-red-100 text-red-800': video.status === 'failed',
+                'bg-yellow-100 text-yellow-800 animate-pulse': video.status === 'processing' || video.status === 'uploaded',
+                'bg-purple-100 text-purple-800 animate-pulse': video.status === 'generating_mindmap' || video.status === 'generating_quiz'
+              }">
+              {{ video.status | titlecase }}
+            </span>
+          </div>
+
+          @if(video.tags && video.tags.length > 0){
+            <div class="mt-2">
+              <mat-chip-set aria-label="Video tags">
+                @for(tag of video.tags.slice(0, 3); track tag){ <mat-chip class="!text-xs !py-0.5 !px-1.5">{{tag}}</mat-chip> }
+                @if(video.tags.length > 3){ <mat-chip class="!text-xs !py-0.5 !px-1.5 bg-gray-200">+{{video.tags.length - 3}} more</mat-chip> }
+              </mat-chip-set>
+            </div>
+          }
+        </div>
+        <mat-card-actions class="p-3 bg-gray-50 border-t justify-end">
+          <button mat-stroked-button color="primary" (click)="viewVideoInProject(video); $event.stopPropagation()">
+            Open Video <mat-icon class="ml-1 text-sm">arrow_forward</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+}

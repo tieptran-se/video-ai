@@ -26,14 +26,14 @@ export interface MindmapDialogData {
   styleUrl: './mindmap-dialog.scss'
 })
 export class MindmapDialog implements AfterViewInit, OnDestroy {
-@ViewChild('markmapDialogContainer') markmapContainer!: ElementRef<SVGSVGElement>;
+  @ViewChild('markmapDialogContainer') markmapContainer!: ElementRef<SVGSVGElement>;
   private markmapInstance: any;
   isLoadingMarkmap = true;
 
   constructor(
     public dialogRef: MatDialogRef<MindmapDialog>,
     @Inject(MAT_DIALOG_DATA) public data: MindmapDialogData
-  ) {}
+  ) { }
 
   ngAfterViewInit(): void {
     this.renderMarkmap();
@@ -41,15 +41,16 @@ export class MindmapDialog implements AfterViewInit, OnDestroy {
 
   renderMarkmap(): void {
     this.isLoadingMarkmap = true;
+    // Defer rendering slightly to ensure the view is ready
     setTimeout(() => {
       if (this.data.markdown && this.markmapContainer?.nativeElement && typeof markmap !== 'undefined') {
         const { Markmap, Transformer } = markmap;
         const transformer = new Transformer();
-        
+
         if (this.markmapInstance && typeof this.markmapInstance.destroy === 'function') {
           this.markmapInstance.destroy();
         }
-        this.markmapContainer.nativeElement.innerHTML = '';
+        this.markmapContainer.nativeElement.innerHTML = ''; // Clear previous
 
         try {
           const { root } = transformer.transform(this.data.markdown);
@@ -61,13 +62,13 @@ export class MindmapDialog implements AfterViewInit, OnDestroy {
         } catch (e) {
           console.error("Error transforming or creating Markmap in dialog:", e);
         } finally {
-            this.isLoadingMarkmap = false;
+          this.isLoadingMarkmap = false;
         }
       } else {
         console.warn("Markmap rendering prerequisites not met in dialog.", {
-            markdown: !!this.data.markdown,
-            container: !!this.markmapContainer?.nativeElement,
-            library: typeof markmap !== 'undefined'
+          markdown: !!this.data.markdown,
+          container: !!this.markmapContainer?.nativeElement,
+          library: typeof markmap !== 'undefined'
         });
         this.isLoadingMarkmap = false;
       }

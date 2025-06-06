@@ -1,0 +1,57 @@
+<!-- This HTML was moved from app.component.html -->
+<div class="app-container">
+  <aside class="app-sidebar bg-slate-800 text-slate-100 p-4 space-y-4">
+    <div class="app-logo text-2xl font-bold text-white mb-8 text-center py-2">
+      <a routerLink="/" class="hover:opacity-80 transition-opacity flex items-center justify-center">
+        <mat-icon class="text-3xl mr-2">movie_filter</mat-icon>
+        <span>VP</span>
+      </a>
+    </div>
+    <nav>
+      <ul class="space-y-2">
+        <li>
+          <a routerLink="/projects" routerLinkActive="bg-slate-700 text-white font-semibold" [routerLinkActiveOptions]="{exact: true}"
+            class="flex items-center px-3 py-3 rounded-md hover:bg-slate-700/80 transition-colors duration-150">
+            <mat-icon class="mr-3">folder_outline</mat-icon>
+            <span>Projects</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/videos" routerLinkActive="bg-slate-700 text-white font-semibold"
+            class="flex items-center px-3 py-3 rounded-md hover:bg-slate-700/80 transition-colors duration-150">
+            <mat-icon class="mr-3">video_library</mat-icon>
+            <span>All Videos</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/projects/new" routerLinkActive="bg-slate-700 text-white font-semibold"
+            class="flex items-center px-3 py-3 rounded-md hover:bg-slate-700/80 transition-colors duration-150">
+            <mat-icon class="mr-3">add_circle_outline</mat-icon>
+            <span>New Project</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="mt-auto text-center text-xs text-slate-400 pt-4 border-t border-slate-700">
+        <p>&copy; {{ currentYear }} VideoProcessor Inc.</p>
+    </div>
+  </aside>
+
+  <div class="main-content-wrapper">
+    <header class="app-header bg-white border-b border-gray-200 p-4 shadow-sm flex items-center justify-between h-16">
+      <h1 class="text-xl font-semibold text-gray-700">Video Transcription Dashboard</h1>
+      <div>
+        <button mat-icon-button aria-label="User Account" class="text-gray-600 hover:text-brand-blue">
+          <mat-icon>account_circle</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main-content">
+      <div class="container mx-auto p-6 lg:p-8">
+        <!-- Child routes (Projects, All Videos, etc.) will be rendered here -->
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>

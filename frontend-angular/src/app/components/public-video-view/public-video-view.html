@@ -1,0 +1,59 @@
+<div class="public-video-page p-4 md:p-8">
+  @if (isLoading) {
+    <div class="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-gray-500">
+      <mat-spinner [diameter]="60" color="primary" class="mb-4"></mat-spinner>
+      <p class="text-lg">Loading video...</p>
+    </div>
+  } @else if (errorMessage) {
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-md shadow-md max-w-2xl mx-auto text-center">
+      <mat-icon color="warn" class="text-5xl mb-3">error_outline</mat-icon>
+      <p class="text-xl font-semibold mb-2">Could Not Load Video</p>
+      <p>{{ errorMessage }}</p>
+      <button mat-stroked-button color="primary" routerLink="/projects" class="mt-6">
+        <mat-icon>home</mat-icon> Go to Homepage
+      </button>
+    </div>
+  } @else if (videoData) {
+    <div class="max-w-8xl mx-auto">
+      <header class="mb-6 pb-4 border-b border-gray-300">
+        <h1 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-1">{{ videoData.filename }}</h1>
+        <p class="text-sm text-gray-500">From project: {{ videoData.project_name }}</p>
+        @if(videoData.tags && videoData.tags.length > 0){
+            <div class="mt-2">
+                <mat-chip-set aria-label="Video tags">
+                @for(tag of videoData.tags; track tag){ 
+                    <mat-chip class="!text-xs !py-0.5 !px-2 mr-1 mb-1 bg-slate-200 text-slate-700">{{tag}}</mat-chip> 
+                }
+                </mat-chip-set>
+            </div>
+        }
+      </header>
+
+      <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+        <!-- Toolbar for Video Actions -->
+        <div class="video-actions-toolbar bg-slate-50 p-3 border-b border-gray-200 flex flex-wrap justify-end items-center gap-2">
+          @if (videoData.mindmap_data) {
+            <button mat-stroked-button color="accent" (click)="openMindmapDialog()" class="h-9 rounded-md text-sm" matTooltip="View the generated mind map">
+              <mat-icon class="mr-1 !text-base">account_tree</mat-icon> View Mind Map
+            </button>
+          }
+          @if (parsedQuizData && parsedQuizData.questions.length > 0 && parsedQuizData.questions[0].question_text !== "Quiz generation error." && parsedQuizData.questions[0].question_text !== "Quiz generation failed: Transcript empty." ) {
+             <button mat-stroked-button color="accent" (click)="openQuizDialog()" class="h-9 rounded-md text-sm" matTooltip="View the generated quiz">
+              <mat-icon class="mr-1 !text-base">school</mat-icon> View Quiz
+            </button>
+          }
+        </div>
+        <!-- Pass the prepared videoForDisplay object -->
+        <app-transcript-display 
+            [video]="videoForDisplay" 
+            [parsedTranscriptData]="parsedTranscript">
+        </app-transcript-display>
+      </div>
+    </div>
+  } @else {
+    <div class="text-center text-gray-500 py-16">
+        <mat-icon class="text-7xl opacity-40 mb-4">sentiment_dissatisfied</mat-icon>
+        <p class="text-2xl font-medium">Video data could not be loaded.</p>
+    </div>
+  }
+</div>

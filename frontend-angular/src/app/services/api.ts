@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpEvent, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, Observable, throwError } from 'rxjs';
-import { Project, Video } from '../models/models';
+import { catchError, map, Observable, throwError } from 'rxjs';
+import { Project, PublicVideoData, Video } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +36,16 @@ export class Api {
       .pipe(catchError(this.handleError));
   }
 
+  getAllVideos(): Observable<Video[]> {
+    return this.http.get<Project[]>(`${this.baseUrl}/projects/`).pipe(
+      map(projects => projects.flatMap(project => 
+        (project.videos || []).map(video => ({...video, project_name: project.name})) 
+      )),
+      catchError(this.handleError)
+    );
+  }
+
+
   uploadVideo(projectId: number, file: File): Observable<HttpEvent<Video>> {
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -63,6 +73,26 @@ export class Api {
 
   deleteVideo(projectId: number, videoId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/projects/${projectId}/videos/${videoId}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  updateVideoTags(videoId: number, tags: string[]): Observable<Video> {
+    return this.http.put<Video>(`${this.baseUrl}/videos/${videoId}/tags`, { tags })
+      .pipe(catchError(this.handleError));
+  }
+
+  publishVideo(videoId: number): Observable<Video> {
+    return this.http.post<Video>(`${this.baseUrl}/videos/${videoId}/publish`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  unpublishVideo(videoId: number): Observable<Video> {
+    return this.http.post<Video>(`${this.baseUrl}/videos/${videoId}/unpublish`, {})
+      .pipe(catchError(this.handleError));
+  }
+
+  getPublicVideoBySlug(slug: string): Observable<PublicVideoData> {
+    return this.http.get<PublicVideoData>(`${this.baseUrl}/public/videos/${slug}`)
       .pipe(catchError(this.handleError));
   }
 }

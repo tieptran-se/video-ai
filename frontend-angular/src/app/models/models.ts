@@ -46,10 +46,19 @@ export interface Video {
   project_id?: number;
   filename: string;
   filepath?: string;
-  status?: 'uploaded' | 'processing' | 'completed' | 'failed' | 'generating_mindmap' | 'generating_quiz'; // Added generating_quiz
+  status?: 'uploaded' | 'processing' | 'completed' | 'failed' | 'generating_mindmap' | 'generating_quiz';
   transcript?: string | VideoTranscript; 
   summary?: string;
   mindmap_data?: string | null;
-  quiz_data?: string | QuizData | null; // Can be string (JSON), parsed object, or null
+  quiz_data?: string | QuizData | null;
+  tags?: string[];
+  is_public?: boolean;
+  public_slug?: string | null;
   uploaded_at?: string;
+}
+
+export interface PublicVideoData extends Omit<Video, 'project_id' | 'status' | 'is_public' | 'public_slug' | 'transcript' | 'quiz_data'> {
+ project_name: string;
+ transcript?: VideoTranscript | null; 
+ quiz_data?: QuizData | null; 
 }

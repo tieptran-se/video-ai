@@ -1,0 +1,63 @@
+// These styles were moved from app.component.scss
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-container {
+  display: flex;
+  height: 100%;
+}
+
+.app-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 3px 0 15px rgba(0,0,0,0.07);
+  transition: width 0.3s ease-in-out;
+
+  .app-logo a {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  nav {
+    flex-grow: 1;
+    padding-top: 1rem;
+  }
+
+  nav a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+    
+    mat-icon {
+      font-size: 1.3rem;
+    }
+  }
+}
+
+.main-content-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #f8f9fc;
+}
+
+.app-header {
+  flex-shrink: 0;
+}
+
+.app-main-content {
+  flex-grow: 1;
+  overflow-y: auto;
+}

@@ -6,15 +6,10 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   selector: 'app-root',
   standalone: true,
   imports: [
-    RouterOutlet, 
-    RouterLink,   
-    RouterLinkActive,
-    MatIconModule
+    RouterOutlet
   ],
-  templateUrl: './app.html',
+  template: '<router-outlet></router-outlet>', // The entire app component is now just the router outlet
   styleUrls: ['./app.scss']
 })
 export class App {
-  title = 'frontend-angular';
-  currentYear = new Date().getFullYear();
 }
