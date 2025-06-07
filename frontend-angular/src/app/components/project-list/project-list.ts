@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { RouterLink, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Project } from '../../models/models';
 import { Api } from '../../services/api';
 
@@ -14,7 +14,6 @@ import { Api } from '../../services/api';
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     MatListModule,
     MatIconModule,
     MatButtonModule,

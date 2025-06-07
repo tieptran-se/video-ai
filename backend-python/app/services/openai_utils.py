@@ -8,7 +8,8 @@ from .prompt_manager import ( # Import prompts from prompt_manager
     get_key_moments_extraction_prompt,
     get_mindmap_generation_prompt,
     get_quiz_generation_prompt,
-    get_tag_generation_prompt
+    get_tag_generation_prompt,
+    get_chat_prompt
 )
 
 try:
@@ -172,3 +173,19 @@ async def generate_tags_from_transcript(full_transcript_text: str) -> PyList[str
     except Exception as e:
         print(f"[OpenAI_Utils] Error during tag generation with OpenAI: {str(e)}")
         return []
+    
+async def answer_question_from_transcript(full_transcript_text: str, user_question: str, chat_history: PyList[Dict[str,str]]) -> str:
+    if not client or not full_transcript_text.strip(): return "Error: Cannot answer question as the video transcript is empty."
+    print(f"[OpenAI_Utils] Answering question: '{user_question}'")
+    prompt = get_chat_prompt(full_transcript_text, user_question)
+    messages_for_api = []
+    # for message in chat_history:
+    #     messages_for_api.append({"role": message["role"], "content": message["content"]})
+    messages_for_api.append({"role": "user", "content": prompt})
+    try:
+        response = await asyncio.to_thread(client.chat.completions.create, model="gpt-4o-mini", messages=messages_for_api, temperature=0.2)
+        answer = response.choices[0].message.content
+        return answer or "I'm sorry, I could not generate a response."
+    except Exception as e:
+        print(f"[OpenAI_Utils] Error during chat completion: {e}")
+        return "An error occurred while answering the question."

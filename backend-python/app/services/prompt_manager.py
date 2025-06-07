@@ -83,3 +83,22 @@ def get_tag_generation_prompt(full_transcript_text: str) -> str:
     Transcript:
     {full_transcript_text[:10000]} 
     """
+
+def get_chat_prompt(transcript_context: str, user_question: str) -> str:
+    """
+    Returns the prompt for answering a user's question based on a transcript.
+    """
+    return f"""
+    You are a helpful assistant who answers questions based *only* on the provided video transcript.
+    The user is asking a question about the video. Use the following transcript to answer it.
+    If the answer cannot be found in the transcript, respond with "I'm sorry, I cannot answer that question based on the provided transcript."
+    Do not use any outside knowledge.
+
+    ---
+    TRANSCRIPT CONTEXT:
+    {transcript_context}
+    ---
+
+    USER QUESTION:
+    {user_question}
+    """

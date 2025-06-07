@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import crud, schemas, database
+from ..services import chat_service
 import json 
 
 router = APIRouter(
@@ -40,3 +41,17 @@ def read_public_video_endpoint(public_slug: str, db: Session = Depends(database.
         tags=db_video.tags if db_video.tags else [], 
         project_name=db_video.project.name if db_video.project else "Unknown Project"
     )
+
+
+@router.post("/{public_slug}/chat", response_model=schemas.ChatResponse)
+async def chat_with_video_endpoint(
+    public_slug: str,
+    chat_request: schemas.ChatRequest,
+    db: Session = Depends(database.get_db)
+):
+    print(f"API: Received chat request for slug '{public_slug}' with question: '{chat_request.question}'")
+    response_data = await chat_service.process_chat_request(public_slug, chat_request.model_dump(), db)
+    if "Error:" in response_data["answer"]:
+        # You might want to handle different error types with different status codes
+        raise HTTPException(status_code=404, detail=response_data["answer"])
+    return response_data

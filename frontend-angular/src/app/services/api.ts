@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpEvent, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, map, Observable, throwError } from 'rxjs';
-import { Project, PublicVideoData, Video } from '../models/models';
+import { ChatRequest, ChatResponse, Project, PublicVideoData, Video } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
@@ -93,6 +93,11 @@ export class Api {
 
   getPublicVideoBySlug(slug: string): Observable<PublicVideoData> {
     return this.http.get<PublicVideoData>(`${this.baseUrl}/public/videos/${slug}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  chatWithVideo(slug: string, request: ChatRequest): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(`${this.baseUrl}/public/videos/${slug}/chat`, request)
       .pipe(catchError(this.handleError));
   }
 }

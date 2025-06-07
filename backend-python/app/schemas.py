@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List, Optional, Any, Union, Literal
+from typing import List, Optional, Any, Union, Literal, Dict # Added Dict here
 from datetime import datetime
 
 class VideoBase(BaseModel):
@@ -24,6 +24,13 @@ class Quiz(BaseModel):
 
 class VideoTagUpdate(BaseModel):
     tags: List[str] = Field(default_factory=list)
+
+class ChatRequest(BaseModel):
+    question: str
+    chat_history: Optional[List[Dict[str, str]]] = []
+
+class ChatResponse(BaseModel):
+    answer: str
 
 class VideoSchema(VideoBase):
     id: int

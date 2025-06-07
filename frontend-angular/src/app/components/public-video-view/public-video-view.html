@@ -1,23 +1,31 @@
-<div class="public-video-page p-4 md:p-8">
-  @if (isLoading) {
-    <div class="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-gray-500">
-      <mat-spinner [diameter]="60" color="primary" class="mb-4"></mat-spinner>
-      <p class="text-lg">Loading video...</p>
-    </div>
-  } @else if (errorMessage) {
-    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-md shadow-md max-w-2xl mx-auto text-center">
-      <mat-icon color="warn" class="text-5xl mb-3">error_outline</mat-icon>
-      <p class="text-xl font-semibold mb-2">Could Not Load Video</p>
-      <p>{{ errorMessage }}</p>
-      <button mat-stroked-button color="primary" routerLink="/projects" class="mt-6">
-        <mat-icon>home</mat-icon> Go to Homepage
-      </button>
-    </div>
-  } @else if (videoData) {
-    <div class="max-w-8xl mx-auto">
-      <header class="mb-6 pb-4 border-b border-gray-300">
-        <h1 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-1">{{ videoData.filename }}</h1>
-        @if(videoData.tags && videoData.tags.length > 0){
+<div class="public-video-page bg-gray-100 min-h-screen">
+  <!-- Public Header -->
+  <header class="public-header bg-white shadow-md p-4 flex justify-between items-center">
+    <a routerLink="/" class="flex items-center gap-2 text-xl font-bold text-gray-800 hover:opacity-80 transition-opacity">
+        <mat-icon class="text-brand-blue">movie_filter</mat-icon>
+        <span>Video Processor</span>
+    </a>
+    <button mat-flat-button color="primary" routerLink="/projects">Go to Dashboard</button>
+  </header>
+
+  <main class="p-4 md:p-8">
+    @if (isLoading) {
+      <div class="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-gray-500">
+        <mat-spinner [diameter]="60" color="primary" class="mb-4"></mat-spinner>
+        <p class="text-lg">Loading video...</p>
+      </div>
+    } @else if (errorMessage) {
+      <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-md shadow-md max-w-2xl mx-auto text-center">
+        <mat-icon color="warn" class="text-5xl mb-3">error_outline</mat-icon>
+        <p class="text-xl font-semibold mb-2">Could Not Load Video</p>
+        <p>{{ errorMessage }}</p>
+      </div>
+    } @else if (videoData) {
+      <div class="max-w-8xl mx-auto">
+        <header class="mb-6 pb-4 border-b border-gray-300">
+          <p class="text-sm text-gray-500">From project: {{ videoData.project_name }}</p>
+          <h1 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-1">{{ videoData.filename }}</h1>
+          @if(videoData.tags && videoData.tags.length > 0){
             <div class="mt-2">
                 <mat-chip-set aria-label="Video tags">
                 @for(tag of videoData.tags; track tag){ 
@@ -25,34 +33,89 @@
                 }
                 </mat-chip-set>
             </div>
-        }
-      </header>
+          }
+        </header>
 
-      <div class="bg-white rounded-lg shadow-xl overflow-hidden">
-        <!-- Toolbar for Video Actions -->
-        <div class="video-actions-toolbar bg-slate-50 p-3 border-b border-gray-200 flex flex-wrap justify-end items-center gap-2">
-          @if (videoData.mindmap_data) {
-            <button mat-stroked-button color="accent" (click)="openMindmapDialog()" class="h-9 rounded-md text-sm" matTooltip="View the generated mind map">
-              <mat-icon class="mr-1 !text-base">account_tree</mat-icon> View Mind Map
-            </button>
-          }
-          @if (parsedQuizData && parsedQuizData.questions.length > 0 && parsedQuizData.questions[0].question_text !== "Quiz generation error." && parsedQuizData.questions[0].question_text !== "Quiz generation failed: Transcript empty." ) {
-             <button mat-stroked-button color="accent" (click)="openQuizDialog()" class="h-9 rounded-md text-sm" matTooltip="View the generated quiz">
-              <mat-icon class="mr-1 !text-base">school</mat-icon> View Quiz
-            </button>
-          }
+        <!-- New Layout with Chat -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Left Column: Video & Transcript -->
+            <div class="flex-grow">
+              <!-- Toolbar for Video Actions -->
+                <div class="video-actions-toolbar flex flex-wrap justify-end items-center gap-2 pr-4">
+                  @if (videoData.mindmap_data) {
+                    <button mat-stroked-button color="primary" (click)="openMindmapDialog()" class="h-9 rounded-md text-sm" matTooltip="View the generated mind map">
+                      <span class="flex items-center">
+                            <mat-icon class="mr-1 !text-base">account_tree</mat-icon>
+                            <span>View Mind Map</span>
+                      </span> 
+                    </button>
+                  }
+                  @if (parsedQuizData && parsedQuizData.questions.length > 0 && parsedQuizData.questions[0].question_text !== "Quiz generation error." && parsedQuizData.questions[0].question_text !== "Quiz generation failed: Transcript empty." ) {
+                    <button mat-stroked-button color="primary" (click)="openQuizDialog()" class="h-9 rounded-md text-sm" matTooltip="View the generated quiz">
+                      <span class="flex items-center">
+                            <mat-icon class="mr-1 !text-base">school</mat-icon>
+                            <span>View Quiz</span>
+                      </span>
+                    </button>
+                  }
+                </div>
+                <app-transcript-display 
+                    [video]="videoForDisplay" 
+                    [parsedTranscriptData]="parsedTranscript">
+                </app-transcript-display>
+            </div>
+            <!-- Right Column: Chat with Video -->
+            <aside class="lg:max-w-md w-full flex-shrink-0">
+                <div class="chat-container sticky top-4 bg-white rounded-lg shadow-xl border flex flex-col h-[80vh]">
+                    <header class="p-4 border-b flex items-center gap-3">
+                        <span class="flex items-center">
+                              <mat-icon class="mr-2 text-brand-blue">question_answer</mat-icon>
+                              <span class="text-lg font-semibold text-gray-800">Chat with this video</span>
+                        </span>
+                    </header>
+                    <div #chatMessagesContainer class="chat-messages flex-grow p-4 overflow-y-auto">
+                        @for (message of chatHistory; track $index) {
+                            <div class="message-wrapper" [ngClass]="{'user-message': message.role === 'user', 'assistant-message': message.role === 'assistant'}">
+                                <div class="message-bubble">
+                                    @if(message.safeContent) {
+                                      <div [innerHTML]="message.safeContent"></div>
+                                    } @else {
+                                      {{ message.content }}
+                                    }
+                                    @if(message.isTyping) {
+                                        <span class="typing-cursor"></span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        @if (isChatLoading && chatHistory[chatHistory.length -1].role !== 'assistant') {
+                            <div class="message-wrapper assistant-message">
+                                <div class="message-bubble">
+                                    <mat-spinner [diameter]="20" color="primary"></mat-spinner>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <footer class="p-4 border-t">
+                        <form (ngSubmit)="sendChatMessage()">
+                            <mat-form-field appearance="fill" class="w-full">
+                                <mat-label>Ask a question...</mat-label>
+                                <input matInput [(ngModel)]="userMessage" name="userMessage" placeholder="E.g., What is the main topic?" [disabled]="isChatLoading">
+                                <button color="primary" mat-icon-button matSuffix type="submit" [disabled]="!userMessage.trim() || isChatLoading" aria-label="Send message">
+                                    <mat-icon>send</mat-icon>
+                                </button>
+                            </mat-form-field>
+                        </form>
+                    </footer>
+                </div>
+            </aside>
         </div>
-        <!-- Pass the prepared videoForDisplay object -->
-        <app-transcript-display 
-            [video]="videoForDisplay" 
-            [parsedTranscriptData]="parsedTranscript">
-        </app-transcript-display>
       </div>
-    </div>
-  } @else {
-    <div class="text-center text-gray-500 py-16">
-        <mat-icon class="text-7xl opacity-40 mb-4">sentiment_dissatisfied</mat-icon>
-        <p class="text-2xl font-medium">Video data could not be loaded.</p>
-    </div>
-  }
+    } @else {
+      <div class="text-center text-gray-500 py-16">
+          <mat-icon class="text-7xl opacity-40 mb-4">sentiment_dissatisfied</mat-icon>
+          <p class="text-2xl font-medium">Video data could not be loaded.</p>
+      </div>
+    }
+  </main>
 </div>

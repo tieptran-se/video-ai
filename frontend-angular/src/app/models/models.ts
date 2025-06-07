@@ -63,3 +63,12 @@ export interface PublicVideoData extends Omit<Video, 'project_id' | 'status' | '
  transcript?: VideoTranscript | null; 
  quiz_data?: QuizData | null; 
 }
+
+export interface ChatRequest {
+  question: string;
+  chat_history?: { role: string; content: string }[];
+}
+
+export interface ChatResponse {
+  answer: string;
+}
